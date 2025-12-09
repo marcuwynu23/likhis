@@ -2,10 +2,12 @@
   <h1>Likhis - Universal API Route Mapper</h1>
   <p><strong>Cross-Platform API Route Discovery and Export Tool</strong></p>
   <p>
-    <img src="https://img.shields.io/npm/v/@marcuwynu23/likhis.svg" alt="npm version"/>
-    <img src="https://img.shields.io/npm/dm/@marcuwynu23/likhis.svg" alt="npm downloads"/>
-    <img src="https://img.shields.io/github/stars/marcuwynu23/likhis.svg" alt="GitHub Stars"/>
-    <img src="https://img.shields.io/github/license/marcuwynu23/likhis.svg" alt="License Badge"/>
+    <img src="https://img.shields.io/github/v/release/marcuwynu23/likhis?include_prereleases&style=flat-square" alt="Release"/>
+    <img src="https://img.shields.io/github/go-mod/go-version/marcuwynu23/likhis?style=flat-square" alt="Go Version"/>
+    <img src="https://img.shields.io/github/stars/marcuwynu23/likhis?style=flat-square" alt="GitHub Stars"/>
+    <img src="https://img.shields.io/github/forks/marcuwynu23/likhis?style=flat-square" alt="GitHub Forks"/>
+    <img src="https://img.shields.io/github/license/marcuwynu23/likhis?style=flat-square" alt="License"/>
+    <img src="https://img.shields.io/github/issues/marcuwynu23/likhis?style=flat-square" alt="GitHub Issues"/>
   </p>
 </div>
 
