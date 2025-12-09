@@ -1,0 +1,9 @@
+name: spring
+description: Java Spring Boot framework
+extensions:
+  - .java
+patterns:
+  - method: "GET|POST|PUT|DELETE|PATCH"
+    route_regex: "@(Get|Post|Put|Delete|Patch|RequestMapping)\\w*\\([^)]*\\)"
+    param_regex: "\\{(\\w+)\\}"
+

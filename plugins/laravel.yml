@@ -1,0 +1,9 @@
+name: laravel
+description: PHP Laravel framework
+extensions:
+  - .php
+patterns:
+  - method: "GET|POST|PUT|DELETE|PATCH|ANY"
+    route_regex: "Route::(get|post|put|delete|patch|any)\\s*\\(\\s*['\"]([^'\"]+)['\"]"
+    param_regex: "\\{(\\w+)\\}"
+

@@ -1,0 +1,10 @@
+name: flask
+description: Python Flask framework
+extensions:
+  - .py
+patterns:
+  - method: "GET"
+    route_regex: "@(?:app|blueprint)\\.route\\s*\\(\\s*['\"]([^'\"]+)['\"]"
+    param_regex: "<(\\w+)(?::[^>]+)?>"
+    query_regex: "methods\\s*=\\s*\\[([^\\]]+)\\]"
+
