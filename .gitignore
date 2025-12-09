@@ -12,6 +12,9 @@ likhis.exe
 # Build directory
 build/
 
+# Release directory
+release/
+
 # Test binary, built with `go test -c`
 *.test
 
