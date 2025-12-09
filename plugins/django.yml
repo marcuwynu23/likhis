@@ -1,0 +1,9 @@
+name: django
+description: Python Django framework
+extensions:
+  - .py
+patterns:
+  - method: "GET"
+    route_regex: "(?:path|re_path)\\s*\\(\\s*['\"]([^'\"]+)['\"]"
+    param_regex: "<(\\w+)(?::[^>]+)?>"
+

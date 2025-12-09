@@ -1,0 +1,14 @@
+name: express
+description: Node.js Express.js framework
+extensions:
+  - .js
+  - .ts
+patterns:
+  - method: "GET|POST|PUT|DELETE|PATCH|ALL"
+    route_regex: "(?:app|router|express)\\.(get|post|put|delete|patch|all)\\s*\\(\\s*['\"]([^'\"]+)['\"]"
+    param_regex: ":(\w+)"
+router_mount:
+  use_pattern: "app\\.use\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*,\\s*(\\w+)"
+  require_pattern: "require\\s*\\(['\"]([^'\"]+)['\"]\\)"
+  var_pattern: "(?:const|let|var)\\s+(\\w+)\\s*=.*require"
+
