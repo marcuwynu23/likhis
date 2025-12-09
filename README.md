@@ -1,8 +1,19 @@
-# Likhis - Universal API Route Mapper
+<div align="center">
+  <h1>Likhis - Universal API Route Mapper</h1>
+  <p><strong>Cross-Platform Deployment Automation Framework for Node.js</strong></p>
+  <p>
+    <img src="https://img.shields.io/npm/v/@marcuwynu23/likhis.svg" alt="npm version"/>
+    <img src="https://img.shields.io/npm/dm/@marcuwynu23/likhis.svg" alt="npm downloads"/>
+    <img src="https://img.shields.io/github/stars/marcuwynu23/likhis.svg" alt="GitHub Stars"/>
+    <img src="https://img.shields.io/github/license/marcuwynu23/likhis.svg" alt="License Badge"/>
+  </p>
+</div>
+
+---
 
 > **Automated API route discovery and export tool for modern backend frameworks**
 
-Likhis is a high-performance, cross-platform command-line tool written in Go that automatically analyzes backend source code to discover API routes, extract HTTP methods, parameters, and generate ready-to-import collections for popular API testing tools.
+Likhis is a high-performance, cross-platform command-line tool written in Go that automatically analyzes backend source code to discover API routes, extract HTTP methods and parameters, and generate ready-to-import collections for popular API testing tools. It eliminates manual route documentation by intelligently parsing your codebase and producing standardized exports compatible with industry-standard testing platforms.
 
 ## Table of Contents
 
@@ -18,10 +29,13 @@ Likhis is a high-performance, cross-platform command-line tool written in Go tha
 - [Architecture](#architecture)
 - [Limitations](#limitations)
 - [Contributing](#contributing)
+- [Documentation](#documentation)
+- [Support](#support)
+- [License](#license)
 
 ## Overview
 
-Likhis streamlines the API documentation and testing workflow by automatically extracting route definitions from your backend codebase. It supports multiple frameworks and generates standardized exports compatible with industry-standard API testing tools, eliminating the need for manual route documentation.
+Likhis streamlines the API documentation and testing workflow by automatically extracting route definitions from your backend codebase. The tool supports multiple popular frameworks and generates standardized exports compatible with industry-standard API testing tools, significantly reducing the time and effort required for manual route documentation and collection creation.
 
 ### Key Benefits
 
@@ -430,17 +444,21 @@ Routes are normalized to a unified JSON structure:
 
 ## Limitations
 
-While Likhis provides comprehensive route detection, there are some limitations:
+While Likhis provides comprehensive route detection capabilities, please be aware of the following limitations:
 
-- **Heuristic Detection**: Query parameter and body field detection uses heuristics and may not capture all parameters
-- **Complex Patterns**: Some advanced route patterns may not be detected
-- **Middleware**: Authentication headers and middleware configurations are not automatically extracted
-- **Dynamic Routes**: Routes generated dynamically at runtime may not be detected
-- **AST Parsing**: Currently uses regex-based parsing; future versions may use AST for improved accuracy
+- **Heuristic Detection**: Query parameter and body field detection uses heuristic algorithms and may not capture all parameters in complex scenarios
+- **Complex Patterns**: Some advanced or unconventional route patterns may not be detected automatically
+- **Middleware Configuration**: Authentication headers and middleware configurations are not automatically extracted from route definitions
+- **Dynamic Routes**: Routes generated dynamically at runtime through code execution may not be detected during static analysis
+- **Parsing Method**: Currently uses regex-based parsing; future versions may incorporate AST (Abstract Syntax Tree) parsing for improved accuracy and coverage
+
+For the most up-to-date information on limitations and planned improvements, please refer to the [CHANGELOG.md](CHANGELOG.md) and project issues.
 
 ## Contributing
 
-Contributions are welcome! Areas where contributions would be particularly valuable:
+We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help makes Likhis better for everyone.
+
+For detailed information on how to contribute, please see our [Contributing Guide](CONTRIBUTING.md). Key areas where contributions are particularly valuable:
 
 - Additional framework support via plugins
 - Improved parameter detection algorithms
@@ -448,20 +466,43 @@ Contributions are welcome! Areas where contributions would be particularly valua
 - Additional export formats
 - Documentation improvements
 
-### Development Setup
+### Quick Start for Contributors
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
+3. Make your changes following our [Development Guidelines](GUIDELINES.md)
 4. Test with the example applications in `exp/`:
    ```bash
    scripts\test.bat
    ```
 5. Submit a pull request
 
+For comprehensive development guidelines, coding standards, and plugin creation instructions, please refer to [GUIDELINES.md](GUIDELINES.md).
+
+## Documentation
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing to the project
+- **[GUIDELINES.md](GUIDELINES.md)** - Development guidelines, architecture, and best practices
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
+
+## Support
+
+### Sponsorship
+
+If you find Likhis useful and would like to support its development, please consider sponsoring the project. See [FUNDING.yml](FUNDING.yml) for sponsorship options.
+
+### Getting Help
+
+- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/marcuwynu23/likhis/issues)
+- **Discussions**: Ask questions and share ideas in [GitHub Discussions](https://github.com/marcuwynu23/likhis/discussions)
+
+## Author
+
+**Mark Wayne Menorca**
+
 ## License
 
-This project is open source and available for use.
+This project is open source and available for use. See the repository for license details.
 
 ---
 
