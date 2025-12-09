@@ -10,24 +10,25 @@ $ErrorActionPreference = "Stop"
 
 $ExeName = "likhis"
 $ReleaseDir = "release"
-$WindowsDir = "$ReleaseDir\likhis-windows-amd64"
-$LinuxDir = "$ReleaseDir\likhis-linux-amd64"
+$VersionDir = "$ReleaseDir\$Version"
+$WindowsDir = "$VersionDir\likhis-windows-amd64"
+$LinuxDir = "$VersionDir\likhis-linux-amd64"
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Creating Release: $Version" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Create release directory
-if (Test-Path $ReleaseDir) {
-    Write-Host "Cleaning existing release directory..." -ForegroundColor Yellow
-    Remove-Item -Path $ReleaseDir -Recurse -Force
+# Create version-specific release directory
+if (Test-Path $VersionDir) {
+    Write-Host "Cleaning existing release directory for version $Version..." -ForegroundColor Yellow
+    Remove-Item -Path $VersionDir -Recurse -Force
 }
-New-Item -ItemType Directory -Path $ReleaseDir -Force | Out-Null
+New-Item -ItemType Directory -Path $VersionDir -Force | Out-Null
 Write-Host ""
 
 # Build Windows amd64
-Write-Host "[1/4] Building Windows amd64..." -ForegroundColor Green
+Write-Host "[1/5] Building Windows amd64..." -ForegroundColor Green
 New-Item -ItemType Directory -Path $WindowsDir -Force | Out-Null
 $env:GOOS = "windows"
 $env:GOARCH = "amd64"
@@ -40,7 +41,7 @@ Write-Host "  ✓ Windows executable built" -ForegroundColor Green
 Write-Host ""
 
 # Build Linux amd64
-Write-Host "[2/4] Building Linux amd64..." -ForegroundColor Green
+Write-Host "[2/5] Building Linux amd64..." -ForegroundColor Green
 New-Item -ItemType Directory -Path $LinuxDir -Force | Out-Null
 $env:GOOS = "linux"
 $env:GOARCH = "amd64"
@@ -53,7 +54,7 @@ Write-Host "  ✓ Linux executable built" -ForegroundColor Green
 Write-Host ""
 
 # Copy plugins to Windows build
-Write-Host "[3/4] Copying plugins..." -ForegroundColor Green
+Write-Host "[3/5] Copying plugins..." -ForegroundColor Green
 Copy-Item -Path "plugins\*" -Destination "$WindowsDir\plugins\" -Recurse -Force
 if (-not (Test-Path "$WindowsDir\plugins")) {
     Write-Host "Error: Failed to copy plugins to Windows build!" -ForegroundColor Red
@@ -71,11 +72,11 @@ Write-Host "  ✓ Plugins copied to Linux build" -ForegroundColor Green
 Write-Host ""
 
 # Create archives
-Write-Host "[4/4] Creating archives..." -ForegroundColor Green
+Write-Host "[4/5] Creating archives..." -ForegroundColor Green
 
 # Create Windows ZIP
 Write-Host "  Creating Windows ZIP archive..." -ForegroundColor Yellow
-$WindowsZip = "$ReleaseDir\likhis-windows-amd64-$Version.zip"
+$WindowsZip = "$VersionDir\likhis-windows-amd64-$Version.zip"
 if (Test-Path $WindowsZip) {
     Remove-Item $WindowsZip -Force
 }
@@ -84,7 +85,7 @@ Write-Host "  ✓ Windows ZIP created: likhis-windows-amd64-$Version.zip" -Foreg
 
 # Create Linux tar.gz
 Write-Host "  Creating Linux tar.gz archive..." -ForegroundColor Yellow
-$LinuxTarGz = "$ReleaseDir\likhis-linux-amd64-$Version.tar.gz"
+$LinuxTarGz = "$VersionDir\likhis-linux-amd64-$Version.tar.gz"
 if (Test-Path $LinuxTarGz) {
     Remove-Item $LinuxTarGz -Force
 }
@@ -98,9 +99,46 @@ try {
     Write-Host "  ✓ Linux tar.gz created: likhis-linux-amd64-$Version.tar.gz" -ForegroundColor Green
 } catch {
     Write-Host "  Warning: tar command not available, creating ZIP instead..." -ForegroundColor Yellow
-    $LinuxZip = "$ReleaseDir\likhis-linux-amd64-$Version.zip"
+    $LinuxZip = "$VersionDir\likhis-linux-amd64-$Version.zip"
     Compress-Archive -Path "$LinuxDir\*" -DestinationPath $LinuxZip -Force
     Write-Host "  ✓ Linux ZIP created: likhis-linux-amd64-$Version.zip" -ForegroundColor Green
+}
+Write-Host ""
+
+# Generate release notes
+Write-Host "[5/5] Generating release notes..." -ForegroundColor Green
+$ReleaseNotesPath = "$VersionDir\RELEASE_NOTES.md"
+try {
+    $changelog = Get-Content "CHANGELOG.md" -Raw
+    $versionPattern = "(?s)#### $([regex]::Escape($Version))(.*?)(?=#### |$)"
+    
+    if ($changelog -match $versionPattern) {
+        $notes = $matches[1].Trim()
+        $notes | Out-File -FilePath $ReleaseNotesPath -Encoding UTF8
+        Write-Host "  ✓ Release notes generated from CHANGELOG.md" -ForegroundColor Green
+    } else {
+        $releaseDate = Get-Date -Format "yyyy-MM-dd"
+        $template = @"
+# Release Notes - $Version
+
+Release date: $releaseDate
+
+See CHANGELOG.md for details.
+"@
+        $template | Out-File -FilePath $ReleaseNotesPath -Encoding UTF8
+        Write-Host "  ⚠ Release notes template created (version not found in CHANGELOG.md)" -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "  ⚠ Warning: Failed to generate release notes: $_" -ForegroundColor Yellow
+    $releaseDate = Get-Date -Format "yyyy-MM-dd"
+    $template = @"
+# Release Notes - $Version
+
+Release date: $releaseDate
+
+See CHANGELOG.md for details.
+"@
+    $template | Out-File -FilePath $ReleaseNotesPath -Encoding UTF8
 }
 Write-Host ""
 
@@ -115,8 +153,10 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Release $Version created successfully!" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
+Write-Host "Release directory: $VersionDir" -ForegroundColor Green
+Write-Host ""
 Write-Host "Release files:" -ForegroundColor Green
-Get-ChildItem -Path $ReleaseDir -Filter "*.zip","*.tar.gz" | ForEach-Object {
+Get-ChildItem -Path $VersionDir -Filter "*.zip","*.tar.gz","*.md" | ForEach-Object {
     Write-Host "  - $($_.Name)" -ForegroundColor White
 }
 Write-Host ""

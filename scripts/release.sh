@@ -19,17 +19,18 @@ echo "Creating Release: $VERSION"
 echo "========================================"
 echo ""
 
-# Create release directory
-if [ -d "$RELEASE_DIR" ]; then
-    echo "Cleaning existing release directory..."
-    rm -rf "$RELEASE_DIR"
+# Create version-specific release directory
+VERSION_DIR="$RELEASE_DIR/$VERSION"
+if [ -d "$VERSION_DIR" ]; then
+    echo "Cleaning existing release directory for version $VERSION..."
+    rm -rf "$VERSION_DIR"
 fi
-mkdir -p "$RELEASE_DIR"
+mkdir -p "$VERSION_DIR"
 echo ""
 
 # Build Windows amd64
-echo "[1/4] Building Windows amd64..."
-WINDOWS_DIR="$RELEASE_DIR/likhis-windows-amd64"
+echo "[1/5] Building Windows amd64..."
+WINDOWS_DIR="$VERSION_DIR/likhis-windows-amd64"
 mkdir -p "$WINDOWS_DIR"
 GOOS=windows GOARCH=amd64 go build -o "$WINDOWS_DIR/$EXE_NAME.exe" main.go
 if [ $? -ne 0 ]; then
@@ -40,8 +41,8 @@ echo "  ✓ Windows executable built"
 echo ""
 
 # Build Linux amd64
-echo "[2/4] Building Linux amd64..."
-LINUX_DIR="$RELEASE_DIR/likhis-linux-amd64"
+echo "[2/5] Building Linux amd64..."
+LINUX_DIR="$VERSION_DIR/likhis-linux-amd64"
 mkdir -p "$LINUX_DIR"
 GOOS=linux GOARCH=amd64 go build -o "$LINUX_DIR/$EXE_NAME" main.go
 if [ $? -ne 0 ]; then
@@ -52,7 +53,7 @@ echo "  ✓ Linux executable built"
 echo ""
 
 # Copy plugins to Windows build
-echo "[3/4] Copying plugins..."
+echo "[3/5] Copying plugins..."
 cp -r plugins "$WINDOWS_DIR/"
 if [ ! -d "$WINDOWS_DIR/plugins" ]; then
     echo "Error: Failed to copy plugins to Windows build!"
@@ -70,21 +71,62 @@ echo "  ✓ Plugins copied to Linux build"
 echo ""
 
 # Create archives
-echo "[4/4] Creating archives..."
+echo "[4/5] Creating archives..."
 
 # Create Windows ZIP
 echo "  Creating Windows ZIP archive..."
-cd "$RELEASE_DIR"
+cd "$VERSION_DIR"
 zip -r "likhis-windows-amd64-$VERSION.zip" "likhis-windows-amd64/" > /dev/null
-cd ..
+cd ../..
 echo "  ✓ Windows ZIP created: likhis-windows-amd64-$VERSION.zip"
 
 # Create Linux tar.gz
 echo "  Creating Linux tar.gz archive..."
-cd "$RELEASE_DIR"
+cd "$VERSION_DIR"
 tar -czf "likhis-linux-amd64-$VERSION.tar.gz" "likhis-linux-amd64/"
-cd ..
+cd ../..
 echo "  ✓ Linux tar.gz created: likhis-linux-amd64-$VERSION.tar.gz"
+echo ""
+
+# Generate release notes
+echo "[5/5] Generating release notes..."
+RELEASE_NOTES_PATH="$VERSION_DIR/RELEASE_NOTES.md"
+if [ -f "CHANGELOG.md" ]; then
+    # Extract version section from CHANGELOG.md
+    if grep -q "#### $VERSION" CHANGELOG.md; then
+        # Extract from "#### VERSION" to next "####" or end of file
+        # Use sed to extract the section
+        sed -n "/#### $VERSION/,/#### /p" CHANGELOG.md | sed '$d' | sed '1d' > "$RELEASE_NOTES_PATH"
+        # If the extracted content is empty, try a different approach
+        if [ ! -s "$RELEASE_NOTES_PATH" ]; then
+            # Alternative: extract until end of file if no next version found
+            sed -n "/#### $VERSION/,\$p" CHANGELOG.md | sed '1d' | sed '/^#### /,$d' > "$RELEASE_NOTES_PATH"
+        fi
+        echo "  ✓ Release notes generated from CHANGELOG.md"
+    else
+        # Create template if version not found
+        RELEASE_DATE=$(date +"%Y-%m-%d")
+        cat > "$RELEASE_NOTES_PATH" << EOF
+# Release Notes - $VERSION
+
+Release date: $RELEASE_DATE
+
+See CHANGELOG.md for details.
+EOF
+        echo "  ⚠ Release notes template created (version not found in CHANGELOG.md)"
+    fi
+else
+    # Create template if CHANGELOG.md doesn't exist
+    RELEASE_DATE=$(date +"%Y-%m-%d")
+    cat > "$RELEASE_NOTES_PATH" << EOF
+# Release Notes - $VERSION
+
+Release date: $RELEASE_DATE
+
+See CHANGELOG.md for details.
+EOF
+    echo "  ⚠ Release notes template created (CHANGELOG.md not found)"
+fi
 echo ""
 
 # Cleanup build directories (optional - comment out if you want to keep them)
@@ -98,8 +140,11 @@ echo "========================================"
 echo "Release $VERSION created successfully!"
 echo "========================================"
 echo ""
+echo "Release directory: $VERSION_DIR"
+echo ""
 echo "Release files:"
-echo "  - $RELEASE_DIR/likhis-windows-amd64-$VERSION.zip"
-echo "  - $RELEASE_DIR/likhis-linux-amd64-$VERSION.tar.gz"
+echo "  - $VERSION_DIR/likhis-windows-amd64-$VERSION.zip"
+echo "  - $VERSION_DIR/likhis-linux-amd64-$VERSION.tar.gz"
+echo "  - $VERSION_DIR/RELEASE_NOTES.md"
 echo ""
 
