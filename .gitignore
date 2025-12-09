@@ -1,0 +1,44 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+api-mapper
+api-mapper.exe
+rrs.exe
+likhis.exe
+
+# Build directory
+build/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+out/
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# Generated output files
+*.json
+!go.mod
+!package.json
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
