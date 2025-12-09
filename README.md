@@ -1,6 +1,6 @@
 <div align="center">
   <h1>Likhis - Universal API Route Mapper</h1>
-  <p><strong>Cross-Platform Deployment Automation Framework for Node.js</strong></p>
+  <p><strong>Cross-Platform API Route Discovery and Export Tool</strong></p>
   <p>
     <img src="https://img.shields.io/npm/v/@marcuwynu23/likhis.svg" alt="npm version"/>
     <img src="https://img.shields.io/npm/dm/@marcuwynu23/likhis.svg" alt="npm downloads"/>
