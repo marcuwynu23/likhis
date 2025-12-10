@@ -895,6 +895,10 @@ func (rp *RouteParser) detectQueryParams(filePath string, lineNum int) []string 
 		regexp.MustCompile(`var\s*\{([^}]+)\}\s*=\s*req\.query`),  // var { param1, param2 } = req.query
 	}
 
+	// Pattern to detect next route definition (stop scanning when we hit another route)
+	// Match both route handlers (get, post, etc.) and router mounts (use)
+	nextRoutePattern := regexp.MustCompile(`(?:app|router|express)\.(get|post|put|delete|patch|all|use)\s*\(`)
+	
 	for scanner.Scan() {
 		currentLine++
 		if currentLine < startLine {
@@ -905,6 +909,11 @@ func (rp *RouteParser) detectQueryParams(filePath string, lineNum int) []string 
 		}
 
 		line := scanner.Text()
+		
+		// Stop scanning if we hit another route definition or router mount (unless it's on the same line)
+		if currentLine > startLine && nextRoutePattern.MatchString(line) {
+			break
+		}
 		
 		// Detect handler function start: arrow function (req, res) => or function(req, res)
 		if strings.Contains(line, "=>") || (strings.Contains(line, "function") && strings.Contains(line, "req")) {
@@ -923,6 +932,8 @@ func (rp *RouteParser) detectQueryParams(filePath string, lineNum int) []string 
 				// Check if this is the end of the route handler (look for closing paren or comma)
 				if strings.Contains(line, ")") || strings.Contains(line, ",") {
 					inHandler = false
+					// Stop scanning after handler ends
+					break
 				}
 			}
 		}
@@ -991,6 +1002,9 @@ func (rp *RouteParser) detectBodyParams(filePath string, lineNum int) []string {
 		regexp.MustCompile(`var\s*\{([^}]+)\}\s*=\s*req\.body`),  // var { param1, param2 } = req.body
 	}
 
+	// Pattern to detect next route definition (stop scanning when we hit another route)
+	nextRoutePattern := regexp.MustCompile(`(?:app|router|express)\.(get|post|put|delete|patch|all)\s*\(`)
+	
 	for scanner.Scan() {
 		currentLine++
 		if currentLine < startLine {
@@ -1001,6 +1015,11 @@ func (rp *RouteParser) detectBodyParams(filePath string, lineNum int) []string {
 		}
 
 		line := scanner.Text()
+		
+		// Stop scanning if we hit another route definition (unless it's on the same line)
+		if currentLine > startLine && nextRoutePattern.MatchString(line) {
+			break
+		}
 		
 		// Detect handler function start: arrow function (req, res) => or function(req, res)
 		if strings.Contains(line, "=>") || (strings.Contains(line, "function") && strings.Contains(line, "req")) {
@@ -1019,6 +1038,8 @@ func (rp *RouteParser) detectBodyParams(filePath string, lineNum int) []string {
 				// Check if this is the end of the route handler (look for closing paren or comma)
 				if strings.Contains(line, ")") || strings.Contains(line, ",") {
 					inHandler = false
+					// Stop scanning after handler ends
+					break
 				}
 			}
 		}
