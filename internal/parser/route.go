@@ -60,7 +60,10 @@ func (rp *RouteParser) HasRouterMountSupport(framework string) bool {
 		return false
 	}
 	
-	plugin := plugins.GetPlugin(rp.plugins, framework)
+	plugin, err := plugins.GetPlugin(rp.plugins, framework)
+	if err != nil {
+		return false
+	}
 	return plugin != nil && plugin.RouterMount.UsePattern != ""
 }
 
@@ -77,7 +80,12 @@ func (rp *RouteParser) BuildRouterMap(files []string, projectRoot string) {
 			}
 		}
 	} else {
-		plugin = plugins.GetPlugin(rp.plugins, rp.framework)
+		var err error
+		plugin, err = plugins.GetPlugin(rp.plugins, rp.framework)
+		if err != nil {
+			// Plugin not found, will fall back to hardcoded patterns
+			plugin = nil
+		}
 	}
 
 	// Fallback to hardcoded Express patterns if no plugin
@@ -299,8 +307,8 @@ func (rp *RouteParser) parseWithPlugins(filePath string, ext string) []Route {
 		}
 	} else {
 		// Use specific framework plugin
-		plugin := plugins.GetPlugin(rp.plugins, rp.framework)
-		if plugin != nil {
+		plugin, err := plugins.GetPlugin(rp.plugins, rp.framework)
+		if err == nil && plugin != nil {
 			for _, pluginExt := range plugin.Extensions {
 				if ext == pluginExt {
 					matchingPlugins = append(matchingPlugins, plugin)
