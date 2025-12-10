@@ -286,6 +286,31 @@ func (rp *RouteParser) ParseFile(filePath string) ([]Route, error) {
 		}
 	}
 
+	// Apply ignore patterns from plugins
+	if len(routes) > 0 {
+		var ignorePatterns []string
+		
+		if rp.framework == "auto" {
+			// Collect ignore patterns from all plugins
+			for _, plugin := range rp.plugins {
+				if len(plugin.Ignore) > 0 {
+					ignorePatterns = append(ignorePatterns, plugin.Ignore...)
+				}
+			}
+		} else {
+			// Use ignore patterns from the specific framework plugin
+			plugin, err := plugins.GetPlugin(rp.plugins, rp.framework)
+			if err == nil && plugin != nil && len(plugin.Ignore) > 0 {
+				ignorePatterns = plugin.Ignore
+			}
+		}
+		
+		// Apply filtering if we have any ignore patterns
+		if len(ignorePatterns) > 0 {
+			routes = rp.filterIgnoredRoutes(routes, ignorePatterns)
+		}
+	}
+
 	return routes, nil
 }
 
@@ -323,6 +348,13 @@ func (rp *RouteParser) parseWithPlugins(filePath string, ext string) []Route {
 		for _, pattern := range plugin.Patterns {
 			routes := rp.parseWithPattern(filePath, pattern)
 			allRoutes = append(allRoutes, routes...)
+		}
+	}
+
+	// Apply ignore patterns if any plugin has them
+	for _, plugin := range matchingPlugins {
+		if len(plugin.Ignore) > 0 {
+			allRoutes = rp.filterIgnoredRoutes(allRoutes, plugin.Ignore)
 		}
 	}
 
@@ -407,13 +439,18 @@ func (rp *RouteParser) parseWithPattern(filePath string, pattern plugins.Pattern
 					}
 				}
 
+				// Detect query and body parameters
+				query := rp.detectQueryParams(filePath, lineNum)
+				body := rp.detectBodyParams(filePath, lineNum)
+
 				// Create routes for each method
 				for _, m := range methods {
 					routes = append(routes, Route{
 						Path:   path,
 						Method: m,
 						Params: params,
-						Query:  rp.detectQueryParams(filePath, lineNum),
+						Query:  query,
+						Body:   body,
 						File:   filePath,
 						Line:   lineNum,
 					})
@@ -460,14 +497,16 @@ func (rp *RouteParser) parseExpress(filePath string) []Route {
 					}
 				}
 
-				// Try to detect query parameters (heuristic: look for req.query usage)
+				// Detect query and body parameters
 				query := rp.detectQueryParams(filePath, lineNum)
+				body := rp.detectBodyParams(filePath, lineNum)
 
 				routes = append(routes, Route{
 					Path:   path,
 					Method: method,
 					Params: params,
 					Query:  query,
+					Body:   body,
 					File:   filePath,
 					Line:   lineNum,
 				})
@@ -494,8 +533,6 @@ func (rp *RouteParser) parseFlask(filePath string) []Route {
 	routePattern := regexp.MustCompile(`@(?:app|blueprint)\.route\s*\(\s*['"]([^'"]+)['"]`)
 	methodPattern := regexp.MustCompile(`methods\s*=\s*\[([^\]]+)\]`)
 	paramPattern := regexp.MustCompile(`<(\w+)(?::[^>]+)?>`)
-
-	var currentRoute *Route
 
 	for scanner.Scan() {
 		lineNum++
@@ -529,29 +566,21 @@ func (rp *RouteParser) parseFlask(filePath string) []Route {
 				}
 			}
 
+			// Detect query and body parameters for Flask
+			query := rp.detectFlaskQueryParams(filePath, lineNum)
+			body := rp.detectFlaskBodyParams(filePath, lineNum)
+
 			// Create routes for each method
 			for _, method := range methods {
 				routes = append(routes, Route{
 					Path:   path,
 					Method: method,
 					Params: params,
-					Query:  rp.detectQueryParams(filePath, lineNum),
+					Query:  query,
+					Body:   body,
 					File:   filePath,
 					Line:   lineNum,
 				})
-			}
-			currentRoute = nil
-		} else if currentRoute != nil {
-			// Look for request.args or request.form usage
-			if strings.Contains(line, "request.args") || strings.Contains(line, "request.form") {
-				// Heuristic: try to extract parameter names
-				argPattern := regexp.MustCompile(`(?:args|form)\[['"](\w+)['"]\]`)
-				argMatches := argPattern.FindAllStringSubmatch(line, -1)
-				for _, am := range argMatches {
-					if len(am) >= 2 {
-						currentRoute.Query = append(currentRoute.Query, am[1])
-					}
-				}
 			}
 		}
 	}
@@ -686,14 +715,16 @@ func (rp *RouteParser) parseSpring(filePath string) []Route {
 					}
 				}
 
-				// Detect query parameters for Spring
+				// Detect query and body parameters for Spring
 				queryParams := rp.detectSpringQueryParams(filePath, lineNum)
+				bodyParams := rp.detectSpringBodyParams(filePath, lineNum)
 
 				routes = append(routes, Route{
 					Path:   path,
 					Method: method,
 					Params: params,
 					Query:  queryParams,
+					Body:   bodyParams,
 					File:   filePath,
 					Line:   lineNum,
 				})
@@ -718,14 +749,16 @@ func (rp *RouteParser) parseSpring(filePath string) []Route {
 					}
 				}
 
-				// Detect query parameters for Spring
+				// Detect query and body parameters for Spring
 				queryParams := rp.detectSpringQueryParams(filePath, lineNum)
+				bodyParams := rp.detectSpringBodyParams(filePath, lineNum)
 
 				routes = append(routes, Route{
 					Path:   path,
 					Method: method,
 					Params: params,
 					Query:  queryParams,
+					Body:   bodyParams,
 					File:   filePath,
 					Line:   lineNum,
 				})
@@ -813,11 +846,16 @@ func (rp *RouteParser) parseLaravel(filePath string) []Route {
 					}
 				}
 
+				// Detect query and body parameters for Laravel
+				query := rp.detectLaravelQueryParams(filePath, lineNum)
+				body := rp.detectLaravelBodyParams(filePath, lineNum)
+
 				routes = append(routes, Route{
 					Path:   path,
 					Method: method,
 					Params: params,
-					Query:  []string{},
+					Query:  query,
+					Body:   body,
 					File:   filePath,
 					Line:   lineNum,
 				})
@@ -828,10 +866,626 @@ func (rp *RouteParser) parseLaravel(filePath string) []Route {
 	return routes
 }
 
-// detectQueryParams attempts to detect query parameters (heuristic)
+// detectQueryParams detects query parameters by scanning code around the route definition
+// Supports Express.js patterns: req.query.param, req.query['param'], const { param } = req.query
 func (rp *RouteParser) detectQueryParams(filePath string, lineNum int) []string {
-	// This is a simplified heuristic - in a real implementation,
-	// you'd analyze more context around the route definition
-	return []string{}
+	var queryParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return queryParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 50 // Scan 50 lines after route definition to catch handler functions
+	
+	// Track if we're inside a handler function
+	inHandler := false
+	braceCount := 0
+	
+	// Patterns for Express.js query parameters
+	queryPatterns := []*regexp.Regexp{
+		regexp.MustCompile(`req\.query\.(\w+)`),                    // req.query.param
+		regexp.MustCompile(`req\.query\[['"](\w+)['"]\]`),         // req.query['param']
+		regexp.MustCompile(`req\.query\[(\w+)\]`),                 // req.query[param]
+		regexp.MustCompile(`const\s*\{([^}]+)\}\s*=\s*req\.query`), // const { param1, param2 } = req.query
+		regexp.MustCompile(`let\s*\{([^}]+)\}\s*=\s*req\.query`),  // let { param1, param2 } = req.query
+		regexp.MustCompile(`var\s*\{([^}]+)\}\s*=\s*req\.query`),  // var { param1, param2 } = req.query
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		
+		// Detect handler function start: arrow function (req, res) => or function(req, res)
+		if strings.Contains(line, "=>") || (strings.Contains(line, "function") && strings.Contains(line, "req")) {
+			inHandler = true
+			braceCount = 0
+		}
+		
+		// Track braces to detect function end
+		if inHandler {
+			braceCount += strings.Count(line, "{") - strings.Count(line, "}")
+			if braceCount < 0 {
+				braceCount = 0
+			}
+			// If we hit a closing brace and brace count is back to 0, we've left the handler
+			if strings.Contains(line, "}") && braceCount == 0 && strings.Count(line, "}") > 0 {
+				// Check if this is the end of the route handler (look for closing paren or comma)
+				if strings.Contains(line, ")") || strings.Contains(line, ",") {
+					inHandler = false
+				}
+			}
+		}
+		
+		// Only check for query params if we're in a handler function or within first few lines
+		if inHandler || currentLine <= startLine + 5 {
+			// Check each pattern
+			for _, pattern := range queryPatterns {
+				matches := pattern.FindAllStringSubmatch(line, -1)
+				for _, match := range matches {
+					if len(match) >= 2 {
+						// Handle destructuring: const { param1, param2 } = req.query
+						if strings.Contains(match[1], ",") {
+							params := strings.Split(match[1], ",")
+							for _, p := range params {
+								p = strings.TrimSpace(p)
+								// Remove default value if present: param = defaultValue
+								if idx := strings.Index(p, "="); idx > 0 {
+									p = strings.TrimSpace(p[:idx])
+								}
+								if p != "" && !contains(queryParams, p) {
+									queryParams = append(queryParams, p)
+								}
+							}
+						} else {
+							param := strings.TrimSpace(match[1])
+							if param != "" && !contains(queryParams, param) {
+								queryParams = append(queryParams, param)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return queryParams
+}
+
+// detectBodyParams detects body parameters by scanning code around the route definition
+// Supports Express.js patterns: req.body.param, req.body['param'], const { param } = req.body
+func (rp *RouteParser) detectBodyParams(filePath string, lineNum int) []string {
+	var bodyParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return bodyParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 50 // Scan 50 lines after route definition to catch handler functions (including arrow functions)
+	
+	// Track if we're inside a handler function
+	inHandler := false
+	braceCount := 0
+	
+	// Patterns for Express.js body parameters
+	bodyPatterns := []*regexp.Regexp{
+		regexp.MustCompile(`req\.body\.(\w+)`),                    // req.body.param
+		regexp.MustCompile(`req\.body\[['"](\w+)['"]\]`),         // req.body['param']
+		regexp.MustCompile(`req\.body\[(\w+)\]`),                 // req.body[param]
+		regexp.MustCompile(`const\s*\{([^}]+)\}\s*=\s*req\.body`), // const { param1, param2 } = req.body
+		regexp.MustCompile(`let\s*\{([^}]+)\}\s*=\s*req\.body`),  // let { param1, param2 } = req.body
+		regexp.MustCompile(`var\s*\{([^}]+)\}\s*=\s*req\.body`),  // var { param1, param2 } = req.body
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		
+		// Detect handler function start: arrow function (req, res) => or function(req, res)
+		if strings.Contains(line, "=>") || (strings.Contains(line, "function") && strings.Contains(line, "req")) {
+			inHandler = true
+			braceCount = 0
+		}
+		
+		// Track braces to detect function end
+		if inHandler {
+			braceCount += strings.Count(line, "{") - strings.Count(line, "}")
+			if braceCount < 0 {
+				braceCount = 0
+			}
+			// If we hit a closing brace and brace count is back to 0, we've left the handler
+			if strings.Contains(line, "}") && braceCount == 0 && strings.Count(line, "}") > 0 {
+				// Check if this is the end of the route handler (look for closing paren or comma)
+				if strings.Contains(line, ")") || strings.Contains(line, ",") {
+					inHandler = false
+				}
+			}
+		}
+		
+		// Only check for body params if we're in a handler function or within first few lines
+		if inHandler || currentLine <= startLine + 5 {
+			// Check each pattern
+			for _, pattern := range bodyPatterns {
+				matches := pattern.FindAllStringSubmatch(line, -1)
+				for _, match := range matches {
+					if len(match) >= 2 {
+						// Handle destructuring: const { param1, param2 } = req.body
+						if strings.Contains(match[1], ",") {
+							params := strings.Split(match[1], ",")
+							for _, p := range params {
+								p = strings.TrimSpace(p)
+								// Remove default value if present: param = defaultValue
+								if idx := strings.Index(p, "="); idx > 0 {
+									p = strings.TrimSpace(p[:idx])
+								}
+								if p != "" && !contains(bodyParams, p) {
+									bodyParams = append(bodyParams, p)
+								}
+							}
+						} else {
+							param := strings.TrimSpace(match[1])
+							if param != "" && !contains(bodyParams, param) {
+								bodyParams = append(bodyParams, param)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return bodyParams
+}
+
+// detectFlaskQueryParams detects Flask query parameters
+// Supports: request.args.get('param'), request.args['param']
+func (rp *RouteParser) detectFlaskQueryParams(filePath string, lineNum int) []string {
+	var queryParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return queryParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 20
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`request\.args\.get\(['"](\w+)['"]`),
+		regexp.MustCompile(`request\.args\[['"](\w+)['"]\]`),
+		regexp.MustCompile(`request\.args\.get\((\w+)`),
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		for _, pattern := range patterns {
+			matches := pattern.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) >= 2 {
+					param := strings.TrimSpace(match[1])
+					if param != "" && !contains(queryParams, param) {
+						queryParams = append(queryParams, param)
+					}
+				}
+			}
+		}
+	}
+
+	return queryParams
+}
+
+// detectFlaskBodyParams detects Flask body parameters
+// Supports: request.form.get('param'), request.json.get('param'), request.get_json()
+func (rp *RouteParser) detectFlaskBodyParams(filePath string, lineNum int) []string {
+	var bodyParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return bodyParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 20
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`request\.form\.get\(['"](\w+)['"]`),
+		regexp.MustCompile(`request\.json\.get\(['"](\w+)['"]`),
+		regexp.MustCompile(`request\.form\[['"](\w+)['"]\]`),
+		regexp.MustCompile(`request\.json\[['"](\w+)['"]\]`),
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		for _, pattern := range patterns {
+			matches := pattern.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) >= 2 {
+					param := strings.TrimSpace(match[1])
+					if param != "" && !contains(bodyParams, param) {
+						bodyParams = append(bodyParams, param)
+					}
+				}
+			}
+		}
+	}
+
+	return bodyParams
+}
+
+// detectDjangoQueryParams detects Django query parameters
+// Supports: request.GET.get('param'), request.GET['param']
+func (rp *RouteParser) detectDjangoQueryParams(filePath string, lineNum int) []string {
+	var queryParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return queryParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 20
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`request\.GET\.get\(['"](\w+)['"]`),
+		regexp.MustCompile(`request\.GET\[['"](\w+)['"]\]`),
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		for _, pattern := range patterns {
+			matches := pattern.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) >= 2 {
+					param := strings.TrimSpace(match[1])
+					if param != "" && !contains(queryParams, param) {
+						queryParams = append(queryParams, param)
+					}
+				}
+			}
+		}
+	}
+
+	return queryParams
+}
+
+// detectDjangoBodyParams detects Django body parameters
+// Supports: request.POST.get('param'), request.POST['param']
+func (rp *RouteParser) detectDjangoBodyParams(filePath string, lineNum int) []string {
+	var bodyParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return bodyParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 20
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`request\.POST\.get\(['"](\w+)['"]`),
+		regexp.MustCompile(`request\.POST\[['"](\w+)['"]\]`),
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		for _, pattern := range patterns {
+			matches := pattern.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) >= 2 {
+					param := strings.TrimSpace(match[1])
+					if param != "" && !contains(bodyParams, param) {
+						bodyParams = append(bodyParams, param)
+					}
+				}
+			}
+		}
+	}
+
+	return bodyParams
+}
+
+// detectLaravelQueryParams detects Laravel query parameters
+// Supports: $request->query('param'), $request->input('param')
+func (rp *RouteParser) detectLaravelQueryParams(filePath string, lineNum int) []string {
+	var queryParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return queryParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 20
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`\$request->query\(['"](\w+)['"]`),
+		regexp.MustCompile(`\$request->input\(['"](\w+)['"]`),
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		for _, pattern := range patterns {
+			matches := pattern.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) >= 2 {
+					param := strings.TrimSpace(match[1])
+					if param != "" && !contains(queryParams, param) {
+						queryParams = append(queryParams, param)
+					}
+				}
+			}
+		}
+	}
+
+	return queryParams
+}
+
+// detectLaravelBodyParams detects Laravel body parameters
+// Supports: $request->input('param'), $request->json('param')
+func (rp *RouteParser) detectLaravelBodyParams(filePath string, lineNum int) []string {
+	var bodyParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return bodyParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 20
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`\$request->input\(['"](\w+)['"]`),
+		regexp.MustCompile(`\$request->json\(['"](\w+)['"]`),
+	}
+
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		for _, pattern := range patterns {
+			matches := pattern.FindAllStringSubmatch(line, -1)
+			for _, match := range matches {
+				if len(match) >= 2 {
+					param := strings.TrimSpace(match[1])
+					if param != "" && !contains(bodyParams, param) {
+						bodyParams = append(bodyParams, param)
+					}
+				}
+			}
+		}
+	}
+
+	return bodyParams
+}
+
+// detectSpringBodyParams detects Spring body parameters
+// Supports: @RequestBody, method parameters
+func (rp *RouteParser) detectSpringBodyParams(filePath string, lineNum int) []string {
+	var bodyParams []string
+	file, err := os.Open(filePath)
+	if err != nil {
+		return bodyParams
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	currentLine := 0
+	startLine := lineNum
+	endLine := lineNum + 30
+
+	// Look for @RequestBody annotation and method parameters
+	requestBodyPattern := regexp.MustCompile(`@RequestBody`)
+	methodParamPattern := regexp.MustCompile(`@RequestBody\s+(?:\w+\s+)?(\w+)\s*[,)]`)
+
+	inMethod := false
+	for scanner.Scan() {
+		currentLine++
+		if currentLine < startLine {
+			continue
+		}
+		if currentLine > endLine {
+			break
+		}
+
+		line := scanner.Text()
+		
+		// Check for method signature start
+		if strings.Contains(line, "public") && strings.Contains(line, "(") {
+			inMethod = true
+		}
+		
+		// Check for @RequestBody with parameter name
+		if matches := methodParamPattern.FindStringSubmatch(line); len(matches) >= 2 {
+			param := strings.TrimSpace(matches[1])
+			if param != "" && !contains(bodyParams, param) {
+				bodyParams = append(bodyParams, param)
+			}
+		}
+		
+		// Check for @RequestBody annotation (may have parameter on next line)
+		if requestBodyPattern.MatchString(line) && inMethod {
+			// Try to find parameter on same or next line
+			if nextLine := scanner.Scan(); nextLine {
+				currentLine++
+				nextLineText := scanner.Text()
+				paramMatch := regexp.MustCompile(`(\w+)\s*[,)]`).FindStringSubmatch(nextLineText)
+				if len(paramMatch) >= 2 {
+					param := strings.TrimSpace(paramMatch[1])
+					if param != "" && !contains(bodyParams, param) {
+						bodyParams = append(bodyParams, param)
+					}
+				}
+			}
+		}
+		
+		// Check for method end
+		if strings.Contains(line, "}") && inMethod {
+			inMethod = false
+		}
+	}
+
+	return bodyParams
+}
+
+// filterIgnoredRoutes filters out routes that match any of the ignore patterns
+// Patterns are checked against route path, query parameters, and body parameters
+func (rp *RouteParser) filterIgnoredRoutes(routes []Route, ignorePatterns []string) []Route {
+	if len(ignorePatterns) == 0 {
+		return routes
+	}
+
+	// Compile all ignore patterns
+	compiledPatterns := make([]*regexp.Regexp, 0, len(ignorePatterns))
+	for _, pattern := range ignorePatterns {
+		compiled, err := regexp.Compile(pattern)
+		if err != nil {
+			// Log error but continue with other patterns
+			continue
+		}
+		compiledPatterns = append(compiledPatterns, compiled)
+	}
+
+	if len(compiledPatterns) == 0 {
+		return routes
+	}
+
+	// Filter routes
+	filtered := make([]Route, 0, len(routes))
+	for _, route := range routes {
+		shouldIgnore := false
+		
+		// Check route path
+		for _, pattern := range compiledPatterns {
+			if pattern.MatchString(route.Path) {
+				shouldIgnore = true
+				break
+			}
+		}
+		
+		// Check query parameters if path didn't match
+		if !shouldIgnore {
+			for _, pattern := range compiledPatterns {
+				for _, queryParam := range route.Query {
+					if pattern.MatchString(queryParam) {
+						shouldIgnore = true
+						break
+					}
+				}
+				if shouldIgnore {
+					break
+				}
+			}
+		}
+		
+		// Check body parameters if path and query didn't match
+		if !shouldIgnore {
+			for _, pattern := range compiledPatterns {
+				for _, bodyParam := range route.Body {
+					if pattern.MatchString(bodyParam) {
+						shouldIgnore = true
+						break
+					}
+				}
+				if shouldIgnore {
+					break
+				}
+			}
+		}
+		
+		if !shouldIgnore {
+			filtered = append(filtered, route)
+		}
+	}
+
+	return filtered
+}
+
+// contains checks if a string slice contains a value
+func contains(slice []string, value string) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }
 

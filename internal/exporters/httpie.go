@@ -83,8 +83,10 @@ type HTTPieForm struct {
 
 // HTTPieFormField represents a form field
 type HTTPieFormField struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
+	Name    string `json:"name"`
+	Value   string `json:"value"`
+	Type    string `json:"type"`
+	Enabled bool   `json:"enabled"`
 }
 
 // HTTPieGraphQL represents GraphQL body
@@ -203,8 +205,10 @@ func createHTTPieRequest(route parser.Route, method string, env string) HTTPieRe
 			var formFields []HTTPieFormField
 			for _, field := range route.Body {
 				formFields = append(formFields, HTTPieFormField{
-					Name:  field,
-					Value: "",
+					Name:    field,
+					Value:   "",
+					Type:    "text",
+					Enabled: true,
 				})
 			}
 			body.Form.Fields = formFields
