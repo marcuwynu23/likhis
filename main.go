@@ -22,14 +22,22 @@ func main() {
 		executablePath, _ = os.Getwd()
 		executablePath = filepath.Join(executablePath, "rrs.exe")
 	}
+	// Always resolve to absolute path to ensure consistent plugin directory resolution
+	if absExecPath, err := filepath.Abs(executablePath); err == nil {
+		executablePath = absExecPath
+	}
 
-	// Load plugins
-	pluginMap, err := plugins.LoadPlugins(executablePath)
+	// Initial plugin load (from executable and current directory)
+	// We'll reload after parsing flags to include project directory plugins
+	pluginMap, loadedDirs, err := plugins.LoadPlugins(executablePath, ".")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: Could not load plugins: %v\n", err)
 	}
+	if loadedDirs == nil {
+		loadedDirs = []string{}
+	}
 
-	// Build framework list from plugins
+	// Build initial framework list from plugins
 	frameworkList := []string{"auto"}
 	for name := range pluginMap {
 		frameworkList = append(frameworkList, name)
@@ -76,6 +84,20 @@ func main() {
 
 	flag.Parse()
 
+	// Reload plugins with the actual project path (to pick up project-level plugins)
+	// This ensures we get plugins from: project directory, executable directory, and current directory
+	allPlugins, allLoadedDirs, err := plugins.LoadPlugins(executablePath, *projectPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Could not load plugins: %v\n", err)
+	}
+	// Replace plugin map with fully loaded plugins
+	pluginMap = allPlugins
+	if allLoadedDirs != nil {
+		loadedDirs = allLoadedDirs
+	} else {
+		loadedDirs = []string{}
+	}
+
 	// Show help if no arguments provided (except flags)
 	if len(os.Args) == 1 {
 		flag.Usage()
@@ -97,7 +119,20 @@ func main() {
 	fmt.Printf("Framework detection: %s\n", *framework)
 	fmt.Printf("Output format: %s\n", *output)
 	if len(pluginMap) > 0 {
-		fmt.Printf("Loaded %d plugin(s)\n", len(pluginMap))
+		fmt.Printf("Loaded %d plugin(s)", len(pluginMap))
+		if len(loadedDirs) > 0 {
+			fmt.Printf(" from: %s", strings.Join(loadedDirs, ", "))
+		}
+		fmt.Println()
+	}
+	
+	// Validate framework plugin if specified (not "auto")
+	if *framework != "auto" {
+		_, err := plugins.GetPlugin(pluginMap, *framework)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	// BFS file traversal

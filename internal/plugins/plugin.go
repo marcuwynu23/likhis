@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,22 +34,118 @@ type RouterMount struct {
 	VarPattern    string `yaml:"var_pattern,omitempty"`
 }
 
-// LoadPlugins loads all plugin YAML files from the plugins directory
-func LoadPlugins(executablePath string) (map[string]*Plugin, error) {
+// LoadPlugins loads all plugin YAML files from multiple possible plugin directories
+// It checks in order: project directory, executable directory, current directory
+func LoadPlugins(executablePath string, projectPath string) (map[string]*Plugin, []string, error) {
 	plugins := make(map[string]*Plugin)
+	var loadedDirs []string
 	
-	// Get directory where executable is located
-	execDir := filepath.Dir(executablePath)
-	pluginsDir := filepath.Join(execDir, "plugins")
+	// List of plugin directories to check (in priority order)
+	var pluginDirs []string
 	
-	// Check if plugins directory exists
-	if _, err := os.Stat(pluginsDir); os.IsNotExist(err) {
-		// Try current directory as fallback
-		pluginsDir = "plugins"
-		if _, err := os.Stat(pluginsDir); os.IsNotExist(err) {
-			return plugins, nil // No plugins directory, return empty map
+	// 1. Project directory plugins (highest priority for custom plugins)
+	if projectPath != "" {
+		absProjectPath, err := filepath.Abs(projectPath)
+		if err == nil {
+			projectPluginsDir := filepath.Join(absProjectPath, "plugins")
+			if _, err := os.Stat(projectPluginsDir); err == nil {
+				pluginDirs = append(pluginDirs, projectPluginsDir)
+			}
 		}
 	}
+	
+	// 2. Executable directory plugins (and parent directories)
+	// First, try to resolve symlinks to get the actual executable path
+	actualExecPath := executablePath
+	if resolved, err := filepath.EvalSymlinks(executablePath); err == nil {
+		actualExecPath = resolved
+	}
+	
+	// Check executable directory and walk up to find plugins directory
+	// This handles cases where executable is in a subdirectory (e.g., build/)
+	execDir := filepath.Dir(actualExecPath)
+	currentCheckDir := execDir
+	maxDepth := 5 // Increased depth to handle deeper directory structures
+	depth := 0
+	
+	for depth < maxDepth {
+		execPluginsDir := filepath.Join(currentCheckDir, "plugins")
+		if _, err := os.Stat(execPluginsDir); err == nil {
+			// Only add if not already in list
+			alreadyAdded := false
+			for _, dir := range pluginDirs {
+				// Use absolute paths for comparison
+				absDir, _ := filepath.Abs(dir)
+				absExecPluginsDir, _ := filepath.Abs(execPluginsDir)
+				if absDir == absExecPluginsDir {
+					alreadyAdded = true
+					break
+				}
+			}
+			if !alreadyAdded {
+				// Use absolute path
+				if absPath, err := filepath.Abs(execPluginsDir); err == nil {
+					pluginDirs = append(pluginDirs, absPath)
+				} else {
+					pluginDirs = append(pluginDirs, execPluginsDir)
+				}
+			}
+			break // Found plugins directory, stop searching
+		}
+		
+		// Move up one directory
+		parentDir := filepath.Dir(currentCheckDir)
+		if parentDir == currentCheckDir {
+			// Reached root, stop
+			break
+		}
+		currentCheckDir = parentDir
+		depth++
+	}
+	
+	// 3. Current directory plugins (fallback)
+	currentDir, err := os.Getwd()
+	if err == nil {
+		currentPluginsDir := filepath.Join(currentDir, "plugins")
+		if _, err := os.Stat(currentPluginsDir); err == nil {
+			// Only add if not already in list (avoid duplicates)
+			alreadyAdded := false
+			for _, dir := range pluginDirs {
+				if dir == currentPluginsDir {
+					alreadyAdded = true
+					break
+				}
+			}
+			if !alreadyAdded {
+				pluginDirs = append(pluginDirs, currentPluginsDir)
+			}
+		}
+	}
+	
+	// Load plugins from each directory (later directories can override earlier ones)
+	for _, pluginsDir := range pluginDirs {
+		loaded, err := loadPluginsFromDir(pluginsDir)
+		if err != nil {
+			// Log error but continue with other directories
+			continue
+		}
+		
+		// Merge plugins (later directories override earlier ones)
+		for key, plugin := range loaded {
+			plugins[key] = plugin
+		}
+		
+		if len(loaded) > 0 {
+			loadedDirs = append(loadedDirs, pluginsDir)
+		}
+	}
+	
+	return plugins, loadedDirs, nil
+}
+
+// loadPluginsFromDir loads all plugin YAML files from a specific directory
+func loadPluginsFromDir(pluginsDir string) (map[string]*Plugin, error) {
+	plugins := make(map[string]*Plugin)
 	
 	// Read all YAML files in plugins directory
 	entries, err := os.ReadDir(pluginsDir)
@@ -69,39 +166,65 @@ func LoadPlugins(executablePath string) (map[string]*Plugin, error) {
 		pluginPath := filepath.Join(pluginsDir, entry.Name())
 		data, err := os.ReadFile(pluginPath)
 		if err != nil {
+			// Log error but continue with other files
+			fmt.Fprintf(os.Stderr, "Warning: Could not read plugin file %s: %v\n", pluginPath, err)
 			continue
 		}
 		
 		var plugin Plugin
 		if err := yaml.Unmarshal(data, &plugin); err != nil {
+			// Log error but continue with other files
+			fmt.Fprintf(os.Stderr, "Warning: Could not parse plugin file %s: %v\n", pluginPath, err)
 			continue
 		}
 		
-		// Use filename (without extension) as key, or plugin name
+		// Validate plugin has required fields
+		if len(plugin.Extensions) == 0 {
+			fmt.Fprintf(os.Stderr, "Warning: Plugin file %s has no extensions defined, skipping\n", pluginPath)
+			continue
+		}
+		if len(plugin.Patterns) == 0 {
+			fmt.Fprintf(os.Stderr, "Warning: Plugin file %s has no patterns defined, skipping\n", pluginPath)
+			continue
+		}
+		
+		// Use filename (without extension) as key - this allows express-v2.yaml to be keyed as "express-v2"
+		// The filename takes priority over the plugin name field to support custom plugin variants
 		key := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
-		if plugin.Name != "" {
+		
+		// Only use plugin.Name as key if it's explicitly different and filename is generic
+		// This maintains backward compatibility while allowing custom plugin names
+		if plugin.Name != "" && key == "plugin" {
 			key = strings.ToLower(plugin.Name)
 		}
+		
 		plugins[key] = &plugin
 	}
 	
 	return plugins, nil
 }
 
-// GetPlugin returns a plugin by name
-func GetPlugin(plugins map[string]*Plugin, name string) *Plugin {
-	// Try exact match
-	if plugin, ok := plugins[strings.ToLower(name)]; ok {
-		return plugin
+// GetPlugin returns a plugin by name with exact matching only
+// Plugin names must match exactly (case-insensitive) to the filename without extension
+func GetPlugin(plugins map[string]*Plugin, name string) (*Plugin, error) {
+	if name == "" {
+		return nil, fmt.Errorf("plugin name cannot be empty")
 	}
 	
-	// Try partial match
-	for key, plugin := range plugins {
-		if strings.Contains(strings.ToLower(key), strings.ToLower(name)) {
-			return plugin
-		}
+	normalizedName := strings.ToLower(name)
+	
+	// Only try exact match - plugin names must match exactly
+	if plugin, ok := plugins[normalizedName]; ok {
+		return plugin, nil
 	}
 	
-	return nil
+	// Build list of available plugins for error message
+	availablePlugins := make([]string, 0, len(plugins))
+	for key := range plugins {
+		availablePlugins = append(availablePlugins, key)
+	}
+	
+	return nil, fmt.Errorf("plugin '%s' not found. Available plugins: %s", name, strings.Join(availablePlugins, ", "))
 }
+
 
