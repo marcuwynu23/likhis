@@ -16,6 +16,7 @@ type Plugin struct {
 	Extensions  []string `yaml:"extensions"`
 	Patterns    []Pattern `yaml:"patterns"`
 	RouterMount RouterMount `yaml:"router_mount,omitempty"`
+	Ignore      []string `yaml:"ignore,omitempty"` // Regex patterns for routes to ignore
 }
 
 // Pattern represents a route pattern to match

@@ -11,4 +11,7 @@ router_mount:
   use_pattern: "app\\.use\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*,\\s*(\\w+)"
   require_pattern: "require\\s*\\(['\"]([^'\"]+)['\"]\\)"
   var_pattern: "(?:const|let|var)\\s+(\\w+)\\s*=.*require"
+ignore:
+  - "^/io(/.*)?$"
+  - "^/health$"
 
