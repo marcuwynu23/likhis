@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/marcuwynu23/likhis/internal/exporters"
@@ -35,14 +36,28 @@ func TestGeneratePostmanCollection(t *testing.T) {
 		t.Errorf("Expected 2 items in collection, got %d", len(collection.Item))
 	}
 
-	// Verify first route
-	if collection.Item[0].Request.Method != "GET" {
-		t.Errorf("Expected GET method, got %s", collection.Item[0].Request.Method)
+	// Find routes by method and path (order may vary)
+	foundGET := false
+	foundPOST := false
+	
+	for _, item := range collection.Item {
+		if item.Request.Method == "GET" && strings.Contains(item.Name, "/users") && !strings.Contains(item.Name, ":id") {
+			foundGET = true
+		}
+		if item.Request.Method == "POST" && strings.Contains(item.Name, "/users/:id") {
+			foundPOST = true
+			// Verify POST route has body
+			if item.Request.Body == nil {
+				t.Error("POST route should have a body")
+			}
+		}
 	}
 	
-	// Verify second route has body
-	if collection.Item[1].Request.Body == nil {
-		t.Error("POST route should have a body")
+	if !foundGET {
+		t.Error("GET /users route not found in collection")
+	}
+	if !foundPOST {
+		t.Error("POST /users/:id route not found in collection")
 	}
 }
 
