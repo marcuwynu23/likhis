@@ -1,0 +1,144 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test on Go ${{ matrix.go-version }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22', '1.23']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test ./tests -v
+
+      - name: Run tests with coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.23'
+        run: go test ./tests -coverprofile=coverage.out
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.go-version == '1.23'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.out
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m --skip-files-use-default-excludes
+        continue-on-error: true
+
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: bin/likhis
+          - os: windows-latest
+            binary: bin/likhis.exe
+          - os: macos-latest
+            binary: bin/likhis
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Create bin directory
+        shell: bash
+        run: mkdir -p bin
+
+      - name: Build binary
+        shell: bash
+        run: |
+          echo "Building binary: ${{ matrix.binary }}"
+          go build -v -o ${{ matrix.binary }} main.go
+          BUILD_EXIT=$?
+          echo "Build exit code: $BUILD_EXIT"
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "❌ Build failed with exit code $BUILD_EXIT"
+            exit 1
+          fi
+          echo "✅ Build command completed successfully"
+          echo "Checking if binary was created:"
+          ls -la ${{ matrix.binary }} 2>/dev/null && echo "Binary exists!" || echo "Binary NOT found!"
+
+      - name: Verify binary exists (Linux/macOS)
+        if: matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest'
+        shell: bash
+        run: |
+          BINARY="${{ matrix.binary }}"
+          echo "Checking for binary: $BINARY"
+          if [ -f "$BINARY" ]; then
+            echo "✓ Binary $BINARY found successfully"
+            ls -lh "$BINARY"
+          else
+            echo "✗ Binary $BINARY not found"
+            echo "Contents of bin directory:"
+            ls -la bin/ 2>/dev/null || echo "bin directory doesn't exist"
+            exit 1
+          fi
+
+      - name: Verify binary exists (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $binary = "${{ matrix.binary }}"
+          Write-Host "Checking for binary: $binary"
+          if (Test-Path $binary) {
+            Write-Host "✓ Binary $binary found successfully"
+            Get-Item $binary | Format-List
+          } else {
+            Write-Host "✗ Binary $binary not found"
+            Write-Host "Contents of bin directory:"
+            Get-ChildItem bin/ -ErrorAction SilentlyContinue | Format-Table Name, Length
+            exit 1
+          }
+
