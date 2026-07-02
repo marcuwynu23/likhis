@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Learn how to use Likhis — CLI flags, examples, and framework-specific usage.">
+  <title>Usage - Likhis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <a href="index.html" class="header-logo">
+        Likhis
+      </a>
+      <span class="header-tagline">Universal API Route Mapper</span>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="features.html">Features</a>
+        <a href="installation.html">Install</a>
+        <a href="usage.html" class="active">Usage</a>
+      </nav>
+      <button class="hamburger" aria-label="Open navigation menu" onclick="openDrawer()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="18" x2="20" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <span style="font-weight:600;font-size:1.0625rem;">Likhis</span>
+      <button class="drawer-close" aria-label="Close navigation menu" onclick="closeDrawer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <a href="index.html" onclick="closeDrawer()">Home</a>
+    <a href="about.html" onclick="closeDrawer()">About</a>
+    <a href="features.html" onclick="closeDrawer()">Features</a>
+    <a href="installation.html" onclick="closeDrawer()">Install</a>
+    <a href="usage.html" class="active" onclick="closeDrawer()">Usage</a>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <h1>Usage</h1>
+      <p>CLI reference, examples, and framework-specific guides.</p>
+    </div>
+  </div>
+
+  <!-- CLI Reference -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Command-Line Interface</h2>
+      <div class="code-block">
+        <div class="code-block-header">Usage</div>
+        <pre><code>likhis [<span class="var">options</span>]</code></pre>
+      </div>
+
+      <h3>Options</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Flag</th>
+              <th>Short</th>
+              <th>Description</th>
+              <th>Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code class="inline-code">--path</code></td>
+              <td><code class="inline-code">-p</code></td>
+              <td>Path to project root directory</td>
+              <td>Current directory</td>
+            </tr>
+            <tr>
+              <td><code class="inline-code">--output</code></td>
+              <td><code class="inline-code">-o</code></td>
+              <td>Output format: <code class="inline-code">postman</code>, <code class="inline-code">insomnia</code>, <code class="inline-code">httpie</code>, <code class="inline-code">curl</code></td>
+              <td><code class="inline-code">postman</code></td>
+            </tr>
+            <tr>
+              <td><code class="inline-code">--file</code></td>
+              <td><code class="inline-code">-f</code></td>
+              <td>Custom output file name</td>
+              <td>Auto-generated</td>
+            </tr>
+            <tr>
+              <td><code class="inline-code">--output-path</code></td>
+              <td><code class="inline-code">-O</code></td>
+              <td>Output directory path</td>
+              <td>Current directory</td>
+            </tr>
+            <tr>
+              <td><code class="inline-code">--framework</code></td>
+              <td><code class="inline-code">-F</code></td>
+              <td>Target framework: <code class="inline-code">auto</code> or plugin name</td>
+              <td><code class="inline-code">auto</code></td>
+            </tr>
+            <tr>
+              <td><code class="inline-code">--full</code></td>
+              <td></td>
+              <td>Generate exports for dev, staging, and prod</td>
+              <td><code class="inline-code">false</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Basic Examples -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Basic Usage</h2>
+
+      <h3>Auto-Detect Framework</h3>
+      <p>Point Likhis at any backend project and let it auto-detect the framework:</p>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./my-project -o postman</code></pre>
+      </div>
+
+      <h3>Specify Framework</h3>
+      <p>Explicitly specify the framework for faster and more accurate detection:</p>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./express-app -o postman -F express
+likhis -p ./flask-app -o insomnia -F flask
+likhis -p ./spring-app -o httpie -F spring
+likhis -p ./laravel-app -o curl -F laravel</code></pre>
+      </div>
+
+      <h3>Custom Output File</h3>
+      <p>Specify a custom file name for the generated collection:</p>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./my-api -o postman -f custom-collection.json</code></pre>
+      </div>
+
+      <h3>Custom Output Directory</h3>
+      <p>Write the output to a specific directory:</p>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./my-api -o postman --output-path ./exports</code></pre>
+      </div>
+
+      <h3>Custom Output Directory and File Name</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./my-api -o postman -f my-api -O ./exports
+<span class="comment"># Generates: ./exports/my-api.json</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Advanced Usage -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Advanced Usage</h2>
+
+      <h3>Environment-Specific Exports</h3>
+      <p>
+        Use the <code class="inline-code">--full</code> flag to generate separate collections for development, staging, and production environments. Each environment uses its own base URL.
+      </p>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./my-api -o postman --full
+<span class="comment"># Generates:</span>
+<span class="comment">#   postman-collection-dev.json</span>
+<span class="comment">#   postman-collection-staging.json</span>
+<span class="comment">#   postman-collection-prod.json</span></code></pre>
+      </div>
+
+      <h3>Environment Exports to Custom Directory</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./my-api -o postman --full --output-path ./api-exports
+<span class="comment"># Generates:</span>
+<span class="comment">#   ./api-exports/postman-collection-dev.json</span>
+<span class="comment">#   ./api-exports/postman-collection-staging.json</span>
+<span class="comment">#   ./api-exports/postman-collection-prod.json</span></code></pre>
+      </div>
+
+      <h3>All Supported Output Formats</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th>Flag</th>
+              <th>Output File</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Postman</td>
+              <td><code class="inline-code">-o postman</code></td>
+              <td><code class="inline-code">postman-collection.json</code></td>
+              <td>Import into Postman Desktop or web</td>
+            </tr>
+            <tr>
+              <td>Insomnia</td>
+              <td><code class="inline-code">-o insomnia</code></td>
+              <td><code class="inline-code">insomnia-export.json</code></td>
+              <td>Import into Insomnia Desktop</td>
+            </tr>
+            <tr>
+              <td>HTTPie Desktop</td>
+              <td><code class="inline-code">-o httpie</code></td>
+              <td><code class="inline-code">httpie-collection.json</code></td>
+              <td>Import into HTTPie Desktop</td>
+            </tr>
+            <tr>
+              <td>cURL</td>
+              <td><code class="inline-code">-o curl</code></td>
+              <td><code class="inline-code">api-requests.sh</code></td>
+              <td>Run directly as a shell script</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Framework-Specific -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Framework-Specific Examples</h2>
+
+      <h3>Express.js with Router Mounting</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./express-app/src -o postman -F express</code></pre>
+      </div>
+
+      <h3>Django URL Patterns</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./django-project -o insomnia -F django</code></pre>
+      </div>
+
+      <h3>Spring Boot Controllers</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./spring-app/src/main/java -o postman -F spring</code></pre>
+      </div>
+
+      <h3>Flask Blueprints</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./flask-app -o insomnia -F flask</code></pre>
+      </div>
+
+      <h3>Laravel API Routes</h3>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis -p ./laravel-app -o curl -F laravel</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Example Output -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Example Output</h2>
+      <p>When you run Likhis on a project, it outputs information about what it found:</p>
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>$ likhis -p ./exp/express -o postman -F express
+
+<span class="dim">Scanning project at: /Users/user/projects/likhis/exp/express
+Framework detection: express
+Output format: postman
+Loaded 1 plugin(s)
+Found 3 files to analyze
+Extracted 5 routes
+Successfully generated postman-collection.json
+You can now use this file with Postman</span></code></pre>
+      </div>
+      <p>
+        The generated <code class="inline-code">postman-collection.json</code> can be imported directly into Postman. It includes all discovered routes with proper HTTP methods, path parameters, query parameters, and request body templates.
+      </p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Likhis</h3>
+          <p>Universal API Route Mapper — automatically discover and export API routes from your backend codebase.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Docs</h4>
+          <a href="about.html">About</a>
+          <a href="features.html">Features</a>
+          <a href="installation.html">Installation</a>
+          <a href="usage.html">Usage</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="https://github.com/marcuwynu23/likhis">GitHub</a>
+          <a href="https://github.com/marcuwynu23/likhis/releases">Releases</a>
+          <a href="https://github.com/marcuwynu23/likhis/issues">Issues</a>
+          <a href="https://github.com/marcuwynu23/likhis/discussions">Discussions</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="https://github.com/marcuwynu23/likhis/blob/main/LICENSE">License</a>
+          <a href="CONTRIBUTING.md">Contributing</a>
+          <a href="GUIDELINES.md">Guidelines</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Mark Wayne Menorca</span>
+
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function openDrawer() {
+      document.getElementById('drawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('open');
+      document.body.classList.add('drawer-open');
+    }
+    function closeDrawer() {
+      document.getElementById('drawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('open');
+      document.body.classList.remove('drawer-open');
+    }
+  </script>
+
+</body>
+</html>
