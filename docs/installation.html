@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Install Likhis — download pre-built binaries, build from source, or use Docker.">
+  <title>Installation - Likhis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <a href="index.html" class="header-logo">
+        Likhis
+      </a>
+      <span class="header-tagline">Universal API Route Mapper</span>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="features.html">Features</a>
+        <a href="installation.html" class="active">Install</a>
+        <a href="usage.html">Usage</a>
+      </nav>
+      <button class="hamburger" aria-label="Open navigation menu" onclick="openDrawer()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="18" x2="20" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <span style="font-weight:600;font-size:1.0625rem;">Likhis</span>
+      <button class="drawer-close" aria-label="Close navigation menu" onclick="closeDrawer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <a href="index.html" onclick="closeDrawer()">Home</a>
+    <a href="about.html" onclick="closeDrawer()">About</a>
+    <a href="features.html" onclick="closeDrawer()">Features</a>
+    <a href="installation.html" class="active" onclick="closeDrawer()">Install</a>
+    <a href="usage.html" onclick="closeDrawer()">Usage</a>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <h1>Installation</h1>
+      <p>Get Likhis up and running on your platform in minutes.</p>
+    </div>
+  </div>
+
+  <!-- Prerequisites -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Prerequisites</h2>
+      <ul>
+        <li><strong>Go 1.21+</strong> (only required for building from source)</li>
+        <li><strong>Windows, macOS, or Linux</strong> — fully cross-platform</li>
+        <li>Access to your backend project source code</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Method 1: Download Binary -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Option 1: Download Pre-Built Binary</h2>
+      <p>
+        The fastest way to get started. Download the latest release for your platform from the
+        <a href="https://github.com/marcuwynu23/likhis/releases">GitHub Releases page</a>.
+      </p>
+
+      <div class="code-block">
+        <div class="code-block-header">Linux / macOS</div>
+        <pre><code><span class="comment"># Download the latest release</span>
+curl -LO https://github.com/marcuwynu23/likhis/releases/latest/download/likhis-linux-amd64.tar.gz
+tar -xzf likhis-linux-amd64.tar.gz
+sudo mv likhis /usr/local/bin/</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">Windows (PowerShell)</div>
+        <pre><code><span class="comment"># Download the latest release</span>
+Invoke-WebRequest -Uri <span class="string">"https://github.com/marcuwynu23/likhis/releases/latest/download/likhis-windows-amd64.zip"</span> -OutFile likhis.zip
+Expand-Archive -Path likhis.zip -DestinationPath likhis
+<span class="comment"># Add to PATH or move to a directory in your PATH</span>
+move .\likhis\likhis.exe C:\Bin\</code></pre>
+      </div>
+
+      <p>After downloading, verify the installation:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis --help</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Method 2: Build from Source -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Option 2: Build from Source</h2>
+      <p>
+        If you have Go 1.21+ installed, you can clone the repository and build the binary yourself.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h3>Clone the repository</h3>
+            <div class="code-block" style="margin:8px 0 0;">
+              <div class="code-block-header">Terminal</div>
+              <pre><code>git clone https://github.com/marcuwynu23/likhis.git
+cd likhis</code></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h3>Build the executable</h3>
+            <div class="code-block" style="margin:8px 0 0;">
+              <div class="code-block-header">Terminal</div>
+              <pre><code>go build -o build/likhis main.go</code></pre>
+            </div>
+            <p style="margin-top:8px;">Or use the build scripts:</p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Build Scripts</h3>
+      <p>Windows users can use the included batch or PowerShell scripts:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">Windows (Batch)</div>
+        <pre><code>scripts\build.bat</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">Windows (PowerShell)</div>
+        <pre><code>scripts\build.ps1</code></pre>
+      </div>
+
+      <h3>Symbolic Link (Optional)</h3>
+      <p>For convenient access, create a symbolic link to a directory in your PATH:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">Windows (Batch)</div>
+        <pre><code>scripts\link.bat</code></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-block-header">Windows (PowerShell)</div>
+        <pre><code>scripts\link.ps1</code></pre>
+      </div>
+
+      <p>This creates a link at <code class="inline-code">C:\Bin\likhis.exe</code> for easy access from any terminal.</p>
+
+      <p>The compiled executable will be located in the <code class="inline-code">build/</code> directory.</p>
+    </div>
+  </section>
+
+  <!-- Verify -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Verify Installation</h2>
+      <p>Run the help command to confirm everything is working:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code>likhis --help
+
+<span class="dim">Universal API Mapper Tool
+
+Usage: likhis [options]
+
+Options:</span>
+  <span class="var">-F</span> <span class="dim">string</span>        Framework to target (default <span class="string">'auto'</span>)
+  <span class="var">-O</span> <span class="dim">string</span>        Output directory path
+  <span class="var">-f</span> <span class="dim">string</span>        Output file name
+  <span class="var">-full</span>           Generate exports for dev, staging, and production
+  <span class="var">-o</span> <span class="dim">string</span>        Output format: postman, insomnia, httpie, curl (default <span class="string">'postman'</span>)
+  <span class="var">-p</span> <span class="dim">string</span>        Path to project root directory (default <span class="string">'.'</span>)</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Quick Start</h2>
+      <p>Once installed, try Likhis on any backend project:</p>
+
+      <div class="code-block">
+        <div class="code-block-header">Terminal</div>
+        <pre><code><span class="comment"># Scan current directory and generate Postman collection</span>
+likhis -p . -o postman
+
+<span class="comment"># Scan a specific project with auto-detection</span>
+likhis -p ./my-backend -o insomnia
+
+<span class="comment"># Generate for a specific framework</span>
+likhis -p ./express-app -o postman -F express
+
+<span class="comment"># Generate environment-specific exports</span>
+likhis -p ./my-api -o postman --full</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Likhis</h3>
+          <p>Universal API Route Mapper — automatically discover and export API routes from your backend codebase.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Docs</h4>
+          <a href="about.html">About</a>
+          <a href="features.html">Features</a>
+          <a href="installation.html">Installation</a>
+          <a href="usage.html">Usage</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="https://github.com/marcuwynu23/likhis">GitHub</a>
+          <a href="https://github.com/marcuwynu23/likhis/releases">Releases</a>
+          <a href="https://github.com/marcuwynu23/likhis/issues">Issues</a>
+          <a href="https://github.com/marcuwynu23/likhis/discussions">Discussions</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="https://github.com/marcuwynu23/likhis/blob/main/LICENSE">License</a>
+          <a href="CONTRIBUTING.md">Contributing</a>
+          <a href="GUIDELINES.md">Guidelines</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Mark Wayne Menorca</span>
+
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function openDrawer() {
+      document.getElementById('drawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('open');
+      document.body.classList.add('drawer-open');
+    }
+    function closeDrawer() {
+      document.getElementById('drawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('open');
+      document.body.classList.remove('drawer-open');
+    }
+  </script>
+
+</body>
+</html>
