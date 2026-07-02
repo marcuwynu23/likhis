@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore all features of Likhis — route detection, framework support, export formats, and plugin system.">
+  <title>Features - Likhis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <a href="index.html" class="header-logo">
+        Likhis
+      </a>
+      <span class="header-tagline">Universal API Route Mapper</span>
+      <nav class="header-nav" aria-label="Main navigation">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="features.html" class="active">Features</a>
+        <a href="installation.html">Install</a>
+        <a href="usage.html">Usage</a>
+      </nav>
+      <button class="hamburger" aria-label="Open navigation menu" onclick="openDrawer()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="4" y1="6" x2="20" y2="6"/>
+          <line x1="4" y1="12" x2="20" y2="12"/>
+          <line x1="4" y1="18" x2="20" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Drawer -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header">
+      <span style="font-weight:600;font-size:1.0625rem;">Likhis</span>
+      <button class="drawer-close" aria-label="Close navigation menu" onclick="closeDrawer()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <a href="index.html" onclick="closeDrawer()">Home</a>
+    <a href="about.html" onclick="closeDrawer()">About</a>
+    <a href="features.html" class="active" onclick="closeDrawer()">Features</a>
+    <a href="installation.html" onclick="closeDrawer()">Install</a>
+    <a href="usage.html" onclick="closeDrawer()">Usage</a>
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="container">
+      <h1>Features</h1>
+      <p>Core capabilities, supported frameworks, and export formats.</p>
+    </div>
+  </div>
+
+  <!-- Core Features Grid -->
+  <section class="content-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Core Capabilities</h2>
+        <p>What Likhis does out of the box.</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h3>Intelligent Route Detection</h3>
+          <p>Uses pattern matching and regex to identify route definitions across different framework conventions with high accuracy.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Breadth-First Traversal</h3>
+          <p>Efficiently scans project directories using a BFS algorithm, prioritizing top-level routes and skipping dependency folders.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Parameter Extraction</h3>
+          <p>Automatically detects path parameters (<code class="inline-code">:id</code>, <code class="inline-code">{id}</code>, <code class="inline-code">&lt;id&gt;</code>), query parameters, and request body fields.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Router Mount Detection</h3>
+          <p>Understands nested router structures and correctly prefixes base paths for frameworks like Express.js.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Environment-Specific Exports</h3>
+          <p>Generate separate collections for dev, staging, and production environments with a single <code class="inline-code">--full</code> flag.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Fast &amp; Lightweight</h3>
+          <p>Written in Go with no external runtime dependencies. Single statically-linked binary runs anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Supported Frameworks -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Supported Frameworks</h2>
+      <p>
+        Likhis works with all major backend frameworks out of the box. Just point it at your project and it will automatically detect which framework you're using.
+      </p>
+
+      <div class="badge-grid" style="margin-bottom:32px;">
+        <span class="badge"><span class="badge-dot js"></span> Express.js</span>
+        <span class="badge"><span class="badge-dot py"></span> Flask</span>
+        <span class="badge"><span class="badge-dot py"></span> Django</span>
+        <span class="badge"><span class="badge-dot java"></span> Spring Boot</span>
+        <span class="badge"><span class="badge-dot php"></span> Laravel</span>
+        <span class="badge"><span class="badge-dot py"></span> FastAPI</span>
+        <span class="badge"><span class="badge-dot js"></span> NestJS</span>
+        <span class="badge"><span class="badge-dot js"></span> Koa</span>
+        <span class="badge"><span class="badge-dot py"></span> Tornado</span>
+      </div>
+
+      <p>
+        Likhis reads your route definitions just like you write them — <code class="inline-code">app.get()</code> in Express, <code class="inline-code">@app.route()</code> in Flask, <code class="inline-code">path()</code> in Django, <code class="inline-code">@GetMapping</code> in Spring Boot, <code class="inline-code">Route::get()</code> in Laravel, and more. No matter the framework, the output is the same: a complete, organized API collection ready to import.
+      </p>
+    </div>
+  </section>
+
+  <!-- Export Formats -->
+  <section class="content-section">
+    <div class="container prose">
+      <h2>Export to Your Favorite Tool</h2>
+      <p>
+        Likhis generates ready-to-import collections for all major API testing tools. Pick the one you use and get started in seconds.
+      </p>
+      <div class="desc-list">
+        <div class="desc-list-item">
+          <span class="desc-list-label">Postman</span>
+          <span class="desc-list-value">Collection v2.1 JSON with environment variables, path/query params, and request body templates. Import directly into Postman Desktop or web.</span>
+        </div>
+        <div class="desc-list-item">
+          <span class="desc-list-label">Insomnia</span>
+          <span class="desc-list-value">Native export with workspace structure, request groups, and environment variables. Ready for Insomnia Desktop.</span>
+        </div>
+        <div class="desc-list-item">
+          <span class="desc-list-label">HTTPie Desktop</span>
+          <span class="desc-list-value">Collection file with metadata, path params, query params, and body support for HTTPie Desktop.</span>
+        </div>
+        <div class="desc-list-item">
+          <span class="desc-list-label">cURL</span>
+          <span class="desc-list-value">Executable shell script with ready-to-run <code class="inline-code">curl</code> commands. Just <code class="inline-code">bash api-requests.sh</code>.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <h3>Likhis</h3>
+          <p>Universal API Route Mapper — automatically discover and export API routes from your backend codebase.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Docs</h4>
+          <a href="about.html">About</a>
+          <a href="features.html">Features</a>
+          <a href="installation.html">Installation</a>
+          <a href="usage.html">Usage</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="https://github.com/marcuwynu23/likhis">GitHub</a>
+          <a href="https://github.com/marcuwynu23/likhis/releases">Releases</a>
+          <a href="https://github.com/marcuwynu23/likhis/issues">Issues</a>
+          <a href="https://github.com/marcuwynu23/likhis/discussions">Discussions</a>
+        </div>
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <a href="https://github.com/marcuwynu23/likhis/blob/main/LICENSE">License</a>
+          <a href="CONTRIBUTING.md">Contributing</a>
+          <a href="GUIDELINES.md">Guidelines</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Mark Wayne Menorca</span>
+
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function openDrawer() {
+      document.getElementById('drawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('open');
+      document.body.classList.add('drawer-open');
+    }
+    function closeDrawer() {
+      document.getElementById('drawer').classList.remove('open');
+      document.getElementById('drawerOverlay').classList.remove('open');
+      document.body.classList.remove('drawer-open');
+    }
+  </script>
+
+</body>
+</html>
