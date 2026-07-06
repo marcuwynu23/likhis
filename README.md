@@ -8,75 +8,106 @@
     <img src="https://img.shields.io/github/forks/marcuwynu23/likhis?style=flat-square" alt="GitHub Forks"/>
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"/>
     <img src="https://img.shields.io/github/issues/marcuwynu23/likhis?style=flat-square" alt="GitHub Issues"/>
+    <img src="https://img.shields.io/github/actions/workflow/status/marcuwynu23/likhis/test.yml?style=flat-square" alt="CI"/>
   </p>
+  <p>
+    <strong>Automatically discover API routes from backend source code and export ready-to-import collections.</strong>
+  </p>
+  ➡️ <strong><a href="USER-GUIDE.md">Read the full user guide →</a></strong>
 </div>
 
-> **Automated API route discovery and export tool for modern backend frameworks**
-
-Likhis is a high-performance, cross-platform command-line tool written in Go that automatically analyzes backend source code to discover API routes, extract HTTP methods and parameters, and generate ready-to-import collections for popular API testing tools. It eliminates manual route documentation by intelligently parsing your codebase and producing standardized exports compatible with industry-standard testing platforms.
-
 ### Pronunciation & Origin
+
 - **Pronunciation:** `/lik-hees/` (**Lik** as in *lick* + **his** with a long *ee* sound like *heez*)
 - **Etymology:** Named after the Tagalog word **Likha** (to create/build) combined with a phonetic twist on **Lihis** (to deviate/pivot).
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Features](#features)
-- [Prerequisites](#prerequisites)
+- [What Is Likhis?](#what-is-likhis)
+- [Use Cases](#use-cases)
+- [Benefits](#benefits)
+- [Advantages Over Other Tools](#advantages-over-other-tools)
+- [User Guide](USER-GUIDE.md)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Supported Frameworks](#supported-frameworks)
-- [Export Formats](#export-formats)
+- [CLI Reference](#cli-reference)
 - [Plugin System](#plugin-system)
+- [Example Output](#example-output)
+- [CI/CD Integration](#cicd-integration)
+- [Development](#development)
 - [Architecture](#architecture)
 - [Limitations](#limitations)
-- [Contributing](#contributing)
-- [Documentation](#documentation)
-- [Support](#support)
+- [Contributing](CONTRIBUTING.md)
 - [License](#license)
 
-## Overview
+## What Is Likhis?
 
-Likhis streamlines the API documentation and testing workflow by automatically extracting route definitions from your backend codebase. The tool supports multiple popular frameworks and generates standardized exports compatible with industry-standard API testing tools, significantly reducing the time and effort required for manual route documentation and collection creation.
+**Likhis** is a high-performance, cross-platform CLI tool written in Go that automatically analyzes backend source code to discover API routes, extract HTTP methods and parameters, and generate ready-to-import collections for popular API testing tools.
 
-### Key Benefits
+### What It Does
 
-- **Zero Configuration**: Automatically detects framework patterns and extracts routes
-- **Multi-Framework Support**: Works with Express, Flask, Django, Spring Boot, Laravel, and more
-- **Extensible Architecture**: YAML-based plugin system for adding new framework support
-- **Multiple Export Formats**: Generate collections for Postman, Insomnia, HTTPie Desktop, or CURL
-- **Environment-Aware**: Generate separate collections for development, staging, and production environments
+- **Discovers** — Scans backend projects using breadth-first traversal, automatically detecting route definitions across multiple frameworks
+- **Extracts** — Pulls HTTP methods, path parameters, query parameters, and request body fields from source code
+- **Exports** — Generates collections for Postman, Insomnia, HTTPie Desktop, cURL, and OpenAPI formats
+- **Detects** — Router mounting structures (e.g., Express.js `app.use()`) and correctly prefixes base paths
+- **Filters** — Route filtering via plugin-level ignore patterns to exclude health checks, WebSocket endpoints, etc.
+- **Environment-Aware** — Generates separate exports for development, staging, and production environments
+- **Extends** — YAML-based plugin architecture lets you add framework support without modifying source code
 
-## Features
+### Why Use It?
 
-### Core Capabilities
+| Problem | How Likhis Solves It |
+|---|---|
+| **Manual API documentation is tedious and error-prone** | Likhis scans your codebase in seconds and extracts every route automatically |
+| **Keeping Postman/Insomnia collections in sync** | Regenerate collections any time routes change with a single command |
+| **Onboarding new team members** | Give them a complete API collection generated directly from your source |
+| **Multiple frameworks in one codebase** | Auto-detects framework patterns; plugin system handles any framework |
+| **Environment-specific API testing** | `--full` flag generates dev, staging, and production collections at once |
 
-- **Intelligent Route Detection**: Uses pattern matching and regex to identify route definitions across different framework conventions
-- **Breadth-First Traversal**: Efficiently scans project directories using BFS algorithm, prioritizing top-level routes
-- **Parameter Extraction**: Automatically detects:
-  - Path parameters (`:id`, `{id}`, `<id>`)
-  - Query parameters (from function signatures and annotations)
-  - Request body fields (for POST/PUT operations)
-- **Router Mount Detection**: Understands nested router structures and correctly prefixes base paths
-- **Environment-Specific Exports**: Generate separate collections for different deployment environments
+### The Philosophy
 
-### Supported Frameworks
+1. **Minimal setup, maximum value.** Point Likhis at your project and go — zero configuration required for most frameworks.
+2. **Your code stays your source of truth.** Collections are derived from code, not maintained separately.
+3. **Extensible by design.** Adding a new framework means writing a YAML file, not Go code.
 
-| Framework   | Language              | Detection Method                        |
-| ----------- | --------------------- | --------------------------------------- |
-| Express.js  | JavaScript/TypeScript | `app.get()`, `router.post()`, etc.      |
-| Flask       | Python                | `@app.route()` decorators               |
-| Django      | Python                | `urls.py` with `path()` or `re_path()`  |
-| Spring Boot | Java                  | `@GetMapping()`, `@PostMapping()`, etc. |
-| Laravel     | PHP                   | `Route::get()`, `Route::post()`, etc.   |
+## Use Cases
 
-## Prerequisites
+| Scenario | How Likhis Helps |
+|---|---|
+| **You just joined a team with a large Express.js API** | Generate a complete Postman collection from the project to explore endpoints |
+| **You need to share API endpoints with frontend developers** | Export an Insomnia workspace they can import immediately |
+| **You maintain a Django REST API with dozens of endpoints** | Keep auto-generated collections in CI to catch route changes |
+| **You're evaluating different API testing tools** | Likhis supports Postman, Insomnia, HTTPie, cURL, and OpenAPI from the same scan |
+| **You have a monorepo with multiple backend services** | Run Likhis on each service directory for per-service collections |
 
-- **Go 1.21+** (for building from source)
-- **Windows, macOS, or Linux** (cross-platform support)
-- Access to your backend project source code
+## Benefits
+
+- **Zero configuration** — automatically detects framework patterns and extracts routes
+- **Multi-framework** — Express.js, Flask, Django, Spring Boot, Laravel, and more via plugins
+- **Multiple export formats** — Postman v2.1, Insomnia, HTTPie Desktop, cURL scripts, OpenAPI specs
+- **Extensible plugin system** — add new framework support with a YAML file, no Go code required
+- **Environment-aware exports** — generate separate dev, staging, and production collections
+- **Router mounting detection** — correctly resolves Express.js-style nested routers with base paths
+- **Parameter extraction** — detects path params, query params, and request body fields per route
+- **Route filtering** — plugin-level ignore patterns to exclude internal or irrelevant endpoints
+- **Cross-platform** — works on Windows, macOS, and Linux with prebuilt binaries
+- **Fast** — breadth-first traversal with BFS algorithm; skips dependency folders automatically
+
+## Advantages Over Other Tools
+
+| Aspect | Likhis | Postman CLI | Insomnia CLI | API Extractor | Manual |
+|---|---|---|---|---|---|
+| **Setup time** | ~10 seconds | Minutes | Minutes | Hours | Ongoing effort |
+| **Framework auto-detection** | Yes | No | No | Limited | N/A |
+| **Plugin system** | YAML-based | No | No | No | N/A |
+| **Export formats** | Postman, Insomnia, HTTPie, cURL, OpenAPI | Postman only | Insomnia only | Postman only | Any |
+| **Router mount detection** | Yes | No | No | No | N/A |
+| **Environment exports** | Dev, staging, prod | Limited | Limited | Limited | Full control |
+| **OpenAPI support** | Yes (export) | Import only | Import only | Yes | Yes |
+| **Runtime** | Go (single binary) | Node.js | Electron | Java | Any |
+| **License** | Apache 2.0 | Proprietary | MIT | Proprietary | N/A |
+| **Offline capable** | Yes | Yes | Yes | Yes | Yes |
+| **Parameter extraction** | Path, query, body | No | No | Limited | Manual |
 
 ## Installation
 
@@ -84,42 +115,32 @@ Likhis streamlines the API documentation and testing workflow by automatically e
 
 1. **Clone the repository**:
 
-   ```bash
-   git clone <repository-url>
-   cd likhis
-   ```
+```bash
+git clone https://github.com/marcuwynu23/likhis.git
+cd likhis
+```
 
 2. **Build the executable**:
 
-   **Using Make (cross-platform)**:
+**Using Make (cross-platform)**:
 
-   ```bash
-   make build
-   ```
+```bash
+make build
+```
 
-   **Manual Build**:
+**Manual Build**:
 
-   ```bash
-   go build -o build/likhis.exe main.go
-   ```
+```bash
+go build -o build/likhis main.go
+```
 
 The compiled executable will be located in the `build/` directory.
 
-### Available Makefile Targets
+### Verify Installation
 
-| Command                 | Description                           |
-| ----------------------- | ------------------------------------- |
-| `make all`              | Clean and build (default)             |
-| `make build`            | Build the binary                      |
-| `make clean`            | Remove build artifacts                |
-| `make test`             | Run unit tests                        |
-| `make test-integration` | Build + test against example projects |
-| `make coverage`         | Run tests with coverage report        |
-| `make lint`             | Run golangci-lint                     |
-| `make run`              | Build + run on current directory      |
-| `make release`          | Cross-compile for all platforms       |
-| `make link`             | Create symbolic link to PATH          |
-| `make help`             | Show available targets                |
+```bash
+./build/likhis --help
+```
 
 ## Quick Start
 
@@ -137,67 +158,71 @@ likhis -p ./express-app -o postman -F express
 likhis -p ./my-api -o postman --full
 ```
 
-## Usage
-
-### Command-Line Interface
+## CLI Reference
 
 ```bash
 likhis [OPTIONS]
 ```
 
-### Options
+| Flag | Short | Default | Description |
+|---|---|---|---|
+| `--path` | `-p` | `.` | Path to project root directory |
+| `--output` | `-o` | `postman` | Output format: `postman`, `insomnia`, `httpie`, `curl`, `openapi` |
+| `--file` | `-f` | Auto-generated | Custom output file name (without extension) |
+| `--output-path` | `-O` | `.` | Output directory path |
+| `--framework` | `-F` | `auto` | Target framework plugin or `auto` for detection |
+| `--full` | | `false` | Generate exports for dev, staging, and production |
 
-| Flag            | Short | Description                                            | Default                        |
-| --------------- | ----- | ------------------------------------------------------ | ------------------------------ |
-| `--path`        | `-p`  | Path to project root directory                         | Current directory              |
-| `--output`      | `-o`  | Output format: `postman`, `insomnia`, `httpie`, `curl` | `postman`                      |
-| `--file`        | `-f`  | Custom output file name                                | Auto-generated based on format |
-| `--output-path` | `-O`  | Output directory path                                  | Current directory              |
-| `--framework`   | `-F`  | Target framework: `auto` or plugin name                | `auto`                         |
-| `--full`        |       | Generate exports for dev, staging, and prod            | `false`                        |
+### Basic Examples
 
-### Examples
-
-#### Basic Usage
+**Express.js project — Postman export:**
 
 ```bash
-# Express.js project - Postman export
 likhis -p ./express-app -o postman -F express
+```
 
-# Flask project - Insomnia export
+**Flask project — Insomnia export:**
+
+```bash
 likhis -p ./flask-app -o insomnia -F flask
+```
 
-# Spring Boot project - HTTPie Desktop export
+**Spring Boot — HTTPie Desktop export:**
+
+```bash
 likhis -p ./spring-app -o httpie -F spring
+```
 
-# Laravel project - CURL script
+**Laravel project — cURL script:**
+
+```bash
 likhis -p ./laravel-app -o curl -F laravel
 ```
 
-#### Advanced Usage
+**Generate OpenAPI spec:**
 
 ```bash
-# Custom output file name
-likhis -p ./my-api -o postman -f custom-collection.json
+likhis -p ./my-api -o openapi
+```
 
-# Custom output directory
-likhis -p ./my-api -o postman --output-path ./exports
+### Advanced Examples
 
-# Custom output directory and file name
+**Custom output file and directory:**
+
+```bash
 likhis -p ./my-api -o postman -f my-api -O ./exports
 # Generates: ./exports/my-api.json
+```
 
-# Auto-detect framework
+**Auto-detect framework:**
+
+```bash
 likhis -p ./my-project -o postman
+```
 
-# Generate environment-specific collections
-likhis -p ./my-api -o postman --full
-# Generates:
-# - postman-collection-dev.json
-# - postman-collection-staging.json
-# - postman-collection-prod.json
+**Environment-specific collections:**
 
-# Generate environment-specific collections to custom directory
+```bash
 likhis -p ./my-api -o postman --full --output-path ./api-exports
 # Generates:
 # - ./api-exports/postman-collection-dev.json
@@ -205,259 +230,198 @@ likhis -p ./my-api -o postman --full --output-path ./api-exports
 # - ./api-exports/postman-collection-prod.json
 ```
 
-#### Framework-Specific Examples
-
-**Express.js with Router Mounting**:
-
-```bash
-likhis -p ./express-app/src -o postman -F express
-```
-
-**Django URL Patterns**:
-
-```bash
-likhis -p ./django-project -o insomnia -F django
-```
-
-**Spring Boot Controllers**:
-
-```bash
-likhis -p ./spring-app/src/main/java -o postman -F spring
-```
-
-## Supported Frameworks
-
-### Node.js/Express
-
-Detects routes defined using:
-
-- `app.get()`, `app.post()`, `app.put()`, `app.delete()`, `app.patch()`
-- `router.get()`, `router.post()`, etc.
-- Router mounting: `app.use('/api', router)`
-
-**Example**:
-
-```javascript
-app.get("/users/:id", handler);
-router.post("/products", handler);
-```
-
-### Python/Flask
-
-Detects routes defined using:
-
-- `@app.route()` decorators
-- HTTP methods specified in `methods` parameter
-
-**Example**:
-
-```python
-@app.route('/users/<id>', methods=['GET'])
-def get_user(id):
-    pass
-```
-
-### Django
-
-Detects routes from `urls.py` files:
-
-- `path()` function
-- `re_path()` function
-
-**Example**:
-
-```python
-path('users/<int:id>/', views.user_detail)
-```
-
-### Java/Spring Boot
-
-Detects routes from controller classes:
-
-- `@GetMapping()`, `@PostMapping()`, `@PutMapping()`, `@DeleteMapping()`, `@PatchMapping()`
-- `@RequestMapping()` at class and method level
-- `@RequestParam` for query parameters
-- `@PathVariable` for path parameters
-
-**Example**:
-
-```java
-@RestController
-@RequestMapping("/users")
-public class UserController {
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable String id) {
-        // ...
-    }
-}
-```
-
-### PHP/Laravel
-
-Detects routes from route files:
-
-- `Route::get()`, `Route::post()`, `Route::put()`, `Route::delete()`, `Route::patch()`
-
-**Example**:
-
-```php
-Route::get('/users/{id}', [UserController::class, 'show']);
-```
-
-## Export Formats
-
-### Postman Collection (v2.1)
-
-Generates a complete Postman Collection v2.1 JSON file ready for import.
-
-**Features**:
-
-- Environment variables for base URLs
-- Organized request structure
-- Path and query parameters
-- Request body templates
-
-**Usage**:
-
-```bash
-likhis -p ./my-api -o postman
-# Output: postman-collection.json
-```
-
-### Insomnia Export
-
-Generates a native Insomnia export compatible with Insomnia Desktop.
-
-**Features**:
-
-- Workspace structure
-- Request groups
-- Environment variables
-- Cookie jar support
-
-**Usage**:
-
-```bash
-likhis -p ./my-api -o insomnia
-# Output: insomnia-export.json
-```
-
-### HTTPie Desktop Collection
-
-Generates a collection file compatible with HTTPie Desktop.
-
-**Usage**:
-
-```bash
-likhis -p ./my-api -o httpie
-# Output: httpie-collection.json
-```
-
-**Note**: HTTPie Desktop may have limited import support. Consider using the CURL format as an alternative.
-
-### CURL Script
-
-Generates a shell script containing ready-to-use `curl` commands for each route.
-
-**Usage**:
-
-```bash
-likhis -p ./my-api -o curl
-# Output: curl-commands.sh
-```
-
 ## Plugin System
 
-Likhis features an extensible YAML-based plugin architecture that allows you to add support for new frameworks without modifying the source code.
+Likhis features an extensible YAML-based plugin architecture that lets you add support for new frameworks without modifying the Go source code.
+
+### Included Plugins
+
+| Plugin | Framework | Files |
+|---|---|---|
+| `express` | Node.js Express.js | `.js`, `.ts` |
+| `flask` | Python Flask | `.py` |
+| `django` | Python Django | `.py` |
+| `spring` | Java Spring Boot | `.java` |
+| `laravel` | PHP Laravel | `.php` |
 
 ### Plugin Structure
 
-Plugins are YAML files located in the `plugins/` directory (next to the executable). Each plugin defines:
+Plugins are YAML files in the `plugins/` directory:
 
 ```yaml
-name: framework-name
-description: Framework description
+name: express
+description: Node.js Express.js framework
 extensions:
-  - .ext1
-  - .ext2
+  - .js
+  - .ts
 patterns:
-  - method: "GET|POST|PUT|DELETE|PATCH"
-    route_regex: "regex pattern to match routes"
-    param_regex: "regex pattern to extract path parameters"
+  - method: "GET|POST|PUT|DELETE|PATCH|ALL"
+    route_regex: "\\w+\\.(get|post|put|delete|patch|all)\\s*\\(\\s*['\"]([^'\"]+)['\"]"
+    param_regex: ":(\\w+)"
 router_mount:
-  use_pattern: "regex for router mounting"
-  require_pattern: "regex for module imports"
-  var_pattern: "regex for variable declarations"
+  use_pattern: "\\w+\\.use\\s*\\(\\s*['\"]([^'\"]+)['\"]\\s*,\\s*(\\w+)"
+  require_pattern: "require\\s*\\(['\"]([^'\"]+)['\"]\\)"
+  var_pattern: "(?:const|let|var)\\s+(\\w+)\\s*=.*require"
 ```
 
 ### Creating a Custom Plugin
 
-1. **Create a YAML file** in the `plugins/` directory:
+1. Create a YAML file in the `plugins/` directory:
 
-   ```bash
-   plugins/myframework.yml
-   ```
+```bash
+plugins/myframework.yml
+```
 
-2. **Define the plugin structure**:
+2. Define the plugin structure with regex patterns for route detection.
 
-   ```yaml
-   name: myframework
-   description: My Custom Framework
-   extensions:
-     - .myext
-   patterns:
-     - method: "GET|POST"
-       route_regex: "route\\.(get|post)\\s*\\(['\"]([^'\"]+)['\"]"
-       param_regex: "\\{(\\w+)\\}"
-   ```
+3. Use your plugin:
 
-3. **Use your plugin**:
-   ```bash
-   likhis -p ./my-project -o postman -F myframework
-   ```
+```bash
+likhis -p ./my-project -o postman -F myframework
+```
 
-### Included Plugins
+### Plugin Load Order
 
-The following plugins are included by default:
+Plugins are loaded from these directories (later overrides earlier):
 
-- `express.yml` - Node.js Express.js framework
-- `flask.yml` - Python Flask framework
-- `django.yml` - Python Django framework
-- `spring.yml` - Java Spring Boot framework
-- `laravel.yml` - PHP Laravel framework
+1. `{project}/plugins/` — project-specific custom plugins
+2. `{executable_directory}/plugins/` — bundled plugins
+3. `./plugins/` — fallback directory
 
-### Plugin Location
+## Example Output
 
-Plugins are loaded from:
+### Postman Collection (v2.1)
 
-1. `{executable_directory}/plugins/` (primary location)
-2. `./plugins/` (fallback if executable directory doesn't exist)
+```json
+{
+  "info": {
+    "name": "Likhis Export (Development)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /users/:id",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/users/:id",
+          "host": ["{{base_url}}"],
+          "path": ["users", ":id"],
+          "variable": [
+            { "key": "id", "value": "" }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+### Insomnia Export
+
+```json
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_source": "likhis",
+  "resources": [
+    {
+      "_type": "request",
+      "method": "GET",
+      "url": "{{ base_url }}/users/{{ id }}"
+    }
+  ]
+}
+```
+
+### cURL Script
+
+```bash
+#!/bin/bash
+# API Requests - Generated by Likhis
+BASE_URL="${BASE_URL:-http://localhost:3000}"
+curl -X GET "$BASE_URL/users/:id"
+curl -X POST "$BASE_URL/products" -H "Content-Type: application/json"
+```
+
+## CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Generate API Collection
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Likhis
+        run: |
+          curl -L -o likhis https://github.com/marcuwynu23/likhis/releases/latest/download/likhis-linux-amd64
+          chmod +x likhis
+      - name: Generate Postman Collection
+        run: ./likhis -p ./backend -o postman -O ./api-collections
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-collections
+          path: ./api-collections/
+```
+
+### GitLab CI
+
+```yaml
+generate-api-collection:
+  stage: test
+  script:
+    - curl -L -o likhis https://github.com/marcuwynu23/likhis/releases/latest/download/likhis-linux-amd64
+    - chmod +x likhis
+    - ./likhis -p ./backend -o postman -O ./api-collections
+  artifacts:
+    paths:
+      - ./api-collections/
+```
+
+## Development
+
+### Prerequisites
+
+| Tool | Version | Purpose |
+|---|---|---|
+| Go | 1.21+ | Compile and run |
+| Make | Any | Build automation |
+
+### Quick Start for Contributors
+
+```bash
+make build          # Build the binary
+make test           # Run unit tests
+make test-integration # Run integration tests against example projects
+make lint           # Run golangci-lint
+make coverage       # Run tests with coverage report
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
 ## Architecture
 
 ### Processing Pipeline
 
-1. **File Traversal**: Performs breadth-first search (BFS) through project directories
-   - Skips common dependency folders (`node_modules`, `vendor`, `.git`, `__pycache__`, etc.)
-   - Filters files by extension based on framework
-
-2. **Route Detection**: Analyzes source files using framework-specific patterns
-   - Regex-based pattern matching
-   - Router mounting detection (for Express.js)
-   - Class-level annotation detection (for Spring Boot)
-
-3. **Parameter Extraction**: Extracts route metadata
-   - Path parameters from route patterns
-   - Query parameters from function signatures
-   - Request body fields (heuristic-based)
-
-4. **Normalization**: Converts framework-specific routes to unified structure
-
-5. **Export Generation**: Transforms normalized routes to target format
+1. **File Traversal** — BFS through project directories, skipping `node_modules`, `vendor`, `.git`, etc.
+2. **Route Detection** — Framework-specific regex patterns (hardcoded or plugin-sourced) identify route definitions
+3. **Router Mounting** — For Express.js-style frameworks, resolves nested router structures and prepends base paths
+4. **Parameter Extraction** — Scans handler functions for `req.query`, `req.body`, `@RequestParam`, etc.
+5. **Route Filtering** — Applies plugin-level ignore patterns to exclude matched routes
+6. **Export Generation** — Transforms normalized routes into target format (Postman, Insomnia, etc.)
 
 ### Internal Route Structure
-
-Routes are normalized to a unified JSON structure:
 
 ```json
 {
@@ -471,76 +435,36 @@ Routes are normalized to a unified JSON structure:
 }
 ```
 
+### Package Layout
+
+```
+likhis/
+├── main.go                  # CLI entry point, flag parsing, orchestration
+├── internal/
+│   ├── traversal/           # BFS file traversal, dependency skipping
+│   ├── parser/              # Route parsing (Express, Flask, Django, Spring, Laravel + plugin engine)
+│   ├── exporters/           # Output generators (Postman, Insomnia, HTTPie, cURL, OpenAPI)
+│   └── plugins/             # YAML plugin loader and pattern matcher
+├── plugins/                 # Built-in YAML plugin definitions
+├── exp/                     # Example projects for integration testing
+└── build/                   # Compiled binaries
+```
+
 ## Limitations
 
-While Likhis provides comprehensive route detection capabilities, please be aware of the following limitations:
+- **Heuristic detection** — query parameter and body field detection is heuristic; complex patterns may be missed
+- **Static analysis only** — routes generated dynamically at runtime are not detected
+- **No AST parsing** — currently uses regex; future versions may incorporate AST-based parsing for accuracy
+- **Middleware not extracted** — authentication headers and middleware config are not captured
 
-- **Heuristic Detection**: Query parameter and body field detection uses heuristic algorithms and may not capture all parameters in complex scenarios
-- **Complex Patterns**: Some advanced or unconventional route patterns may not be detected automatically
-- **Middleware Configuration**: Authentication headers and middleware configurations are not automatically extracted from route definitions
-- **Dynamic Routes**: Routes generated dynamically at runtime through code execution may not be detected during static analysis
-- **Parsing Method**: Currently uses regex-based parsing; future versions may incorporate AST (Abstract Syntax Tree) parsing for improved accuracy and coverage
-
-For the most up-to-date information on limitations and planned improvements, please refer to the [CHANGELOG.md](CHANGELOG.md) and project issues.
-
-## Contributing
-
-We welcome contributions from the community! Whether you're fixing bugs, adding features, or improving documentation, your help makes Likhis better for everyone.
-
-For detailed information on how to contribute, please see our [Contributing Guide](CONTRIBUTING.md). Key areas where contributions are particularly valuable:
-
-- Additional framework support via plugins
-- Improved parameter detection algorithms
-- AST-based parsing for better accuracy
-- Additional export formats
-- Documentation improvements
-
-### Quick Start for Contributors
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes following our [Development Guidelines](GUIDELINES.md)
-4. Build and test:
-   ```bash
-   make build          # Build the binary
-   make test           # Run unit tests
-   make test-integration  # Run integration tests against example projects
-   make lint           # Run golangci-lint
-   make coverage       # Run tests with coverage report
-   ```
-5. Submit a pull request
-
-For comprehensive development guidelines, coding standards, and plugin creation instructions, please refer to [GUIDELINES.md](GUIDELINES.md).
-
-## Documentation
-
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Guidelines for contributing to the project
-- **[GUIDELINES.md](GUIDELINES.md)** - Development guidelines, architecture, and best practices
-- **[CHANGELOG.md](CHANGELOG.md)** - Version history and release notes
-
-## Support
-
-### Sponsorship
-
-If you find Likhis useful and would like to support its development, please consider sponsoring the project. See [FUNDING.yml](FUNDING.yml) for sponsorship options.
-
-### Getting Help
-
-- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/marcuwynu23/likhis/issues)
-- **Discussions**: Ask questions and share ideas in [GitHub Discussions](https://github.com/marcuwynu23/likhis/discussions)
-
-## Author
-
-**Mark Wayne Menorca**
+For the most up-to-date information, see [CHANGELOG.md](CHANGELOG.md) and [GitHub Issues](https://github.com/marcuwynu23/likhis/issues).
 
 ## License
 
-This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 — see [LICENSE](LICENSE) for details.
+
+All contributors must adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 
-Happy Coding! 🚀
-
----
-
-**Note**: This tool is designed to assist with API documentation and testing. Always verify generated routes against your actual API implementation.
+**Note:** This tool is designed to assist with API documentation and testing. Always verify generated routes against your actual API implementation.
