@@ -94,9 +94,10 @@ func (rp *RouteParser) BuildRouterMap(files []string, projectRoot string) {
 			return
 		}
 		// Use hardcoded Express patterns
-		usePattern := regexp.MustCompile(`app\.use\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\w+)`)
+		usePattern := regexp.MustCompile(`\w+\.use\s*\(\s*['"]([^'"]+)['"]\s*,\s*(\w+)`)
 		requirePattern := regexp.MustCompile(`require\s*\(['"]([^'"]+)['"]\)`)
-		rp.buildRouterMapWithPatterns(files, usePattern, requirePattern, regexp.MustCompile(`(?:const|let|var)\s+(\w+)\s*=.*require`))
+		importPattern := regexp.MustCompile(`import\s+(\w+)\s+from\s+['"]([^'"]+)['"]`)
+		rp.buildRouterMapWithPatterns(files, usePattern, requirePattern, regexp.MustCompile(`(?:const|let|var)\s+(\w+)\s*=.*require`), importPattern)
 		return
 	}
 
@@ -104,11 +105,12 @@ func (rp *RouteParser) BuildRouterMap(files []string, projectRoot string) {
 	usePattern := regexp.MustCompile(plugin.RouterMount.UsePattern)
 	requirePattern := regexp.MustCompile(plugin.RouterMount.RequirePattern)
 	varPattern := regexp.MustCompile(plugin.RouterMount.VarPattern)
-	rp.buildRouterMapWithPatterns(files, usePattern, requirePattern, varPattern)
+	importPattern := regexp.MustCompile(`import\s+(\w+)\s+from\s+['"]([^'"]+)['"]`)
+	rp.buildRouterMapWithPatterns(files, usePattern, requirePattern, varPattern, importPattern)
 }
 
 // buildRouterMapWithPatterns builds router map using provided patterns
-func (rp *RouteParser) buildRouterMapWithPatterns(files []string, usePattern, requirePattern, varPattern *regexp.Regexp) {
+func (rp *RouteParser) buildRouterMapWithPatterns(files []string, usePattern, requirePattern, varPattern, importPattern *regexp.Regexp) {
 
 	for _, filePath := range files {
 		ext := filepath.Ext(filePath)
@@ -124,13 +126,13 @@ func (rp *RouteParser) buildRouterMapWithPatterns(files []string, usePattern, re
 		scanner := bufio.NewScanner(file)
 		var routerVars map[string]string // Maps variable name to file path
 
-		// First pass: find require statements for routers
+		// First pass: find require/import statements for routers
 		for scanner.Scan() {
 			line := scanner.Text()
+
 			// Pattern: const usersRouter = require('./routes/users')
 			requireMatch := requirePattern.FindStringSubmatch(line)
 			if requireMatch != nil && len(requireMatch) >= 2 {
-				// Extract variable name using varPattern
 				varNameMatch := varPattern.FindStringSubmatch(line)
 				if varNameMatch != nil && len(varNameMatch) >= 2 {
 					if routerVars == nil {
@@ -138,9 +140,21 @@ func (rp *RouteParser) buildRouterMapWithPatterns(files []string, usePattern, re
 					}
 					routerVarName := varNameMatch[1]
 					requirePath := requireMatch[1]
-
-					// Resolve relative path to absolute
 					routerFile := rp.resolveRouterPath(filePath, requirePath)
+					routerVars[routerVarName] = routerFile
+				}
+			}
+
+			// Pattern: import authRouter from './app/auth/auth.route'
+			if importPattern != nil {
+				importMatch := importPattern.FindStringSubmatch(line)
+				if importMatch != nil && len(importMatch) >= 3 {
+					if routerVars == nil {
+						routerVars = make(map[string]string)
+					}
+					routerVarName := importMatch[1]
+					importPath := importMatch[2]
+					routerFile := rp.resolveRouterPath(filePath, importPath)
 					routerVars[routerVarName] = routerFile
 				}
 			}
@@ -475,7 +489,7 @@ func (rp *RouteParser) parseExpress(filePath string) []Route {
 	lineNum := 0
 
 	// Patterns for Express routes
-	methodPattern := regexp.MustCompile(`(?:app|router|express)\.(get|post|put|delete|patch|all)\s*\(\s*['"]([^'"]+)['"]`)
+	methodPattern := regexp.MustCompile(`\w+\.(get|post|put|delete|patch|all)\s*\(\s*['"]([^'"]+)['"]`)
 	paramPattern := regexp.MustCompile(`:(\w+)`)
 
 	for scanner.Scan() {
@@ -897,7 +911,7 @@ func (rp *RouteParser) detectQueryParams(filePath string, lineNum int) []string 
 
 	// Pattern to detect next route definition (stop scanning when we hit another route)
 	// Match both route handlers (get, post, etc.) and router mounts (use)
-	nextRoutePattern := regexp.MustCompile(`(?:app|router|express)\.(get|post|put|delete|patch|all|use)\s*\(`)
+	nextRoutePattern := regexp.MustCompile(`\w+\.(get|post|put|delete|patch|all|use)\s*\(`)
 	
 	for scanner.Scan() {
 		currentLine++
@@ -1003,7 +1017,7 @@ func (rp *RouteParser) detectBodyParams(filePath string, lineNum int) []string {
 	}
 
 	// Pattern to detect next route definition (stop scanning when we hit another route)
-	nextRoutePattern := regexp.MustCompile(`(?:app|router|express)\.(get|post|put|delete|patch|all)\s*\(`)
+	nextRoutePattern := regexp.MustCompile(`\w+\.(get|post|put|delete|patch|all)\s*\(`)
 	
 	for scanner.Scan() {
 		currentLine++
