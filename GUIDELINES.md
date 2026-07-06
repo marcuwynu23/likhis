@@ -69,7 +69,6 @@ likhis/
 │   └── plugins/           # Plugin system
 ├── plugins/               # YAML plugin definitions
 ├── exp/                   # Example projects for testing
-├── scripts/               # Build and test scripts
 └── build/                 # Compiled executables
 ```
 
@@ -248,8 +247,10 @@ Create an example in `exp/framework-name/`:
 
 ```bash
 # All tests
-scripts/test.bat  # Windows
-./scripts/test.sh  # Unix/Linux/macOS
+make test
+
+# Integration tests
+make test-integration
 
 # Specific framework
 ./build/likhis -p exp/express -o postman -F express
@@ -327,13 +328,12 @@ Follow [Semantic Versioning](https://semver.org/):
 
 3. **Build Binaries**
    ```bash
-   scripts/build.bat  # Windows
-   ./scripts/build.sh  # Unix/Linux/macOS
+   make build
    ```
 
 4. **Run Full Test Suite**
    ```bash
-   scripts/test.bat  # or ./scripts/test.sh
+   make test
    ```
 
 5. **Create Release Notes**
