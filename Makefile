@@ -6,15 +6,26 @@ BUILD_DIR      = build
 OUT_DIR        = out
 RELEASE_DIR    = release
 PLUGIN_DIR     = plugins
-LINK_DIR       = C:\Bin\webserve
+LINK_DIR       = C:\Bin\tools
 GOFLAGS        = -ldflags="-s -w"
 GOTEST_FLAGS   = -v
 
-ifeq ($(OS),Windows_NT)
+ifneq ($(MSYSTEM),)
+    # MSYS2/Git Bash - Unix commands available
     BINARY      = $(BINARY_NAME).exe
-    RM          = rmdir /s /q
-    RM_FILE     = del /f /q
-    MKDIR_P     = mkdir
+    RM          = rm -rf
+    RM_FILE     = rm -f
+    MKDIR_P     = mkdir -p
+    GO_BUILD    = go build $(GOFLAGS) -o
+    TEST_RUN    = go test ./tests $(GOTEST_FLAGS)
+    TEST_COV    = go test ./tests -coverprofile=coverage.out
+else ifeq ($(OS),Windows_NT)
+    # Native Windows cmd
+    BINARY      = $(BINARY_NAME).exe
+    SHELL       = cmd.exe
+    RM          = rmdir /s /q 2>nul
+    RM_FILE     = del /f /q 2>nul
+    MKDIR_P     = mkdir 2>nul
     GO_BUILD    = go build $(GOFLAGS) -o
     TEST_RUN    = go test ./tests $(GOTEST_FLAGS)
     TEST_COV    = go test ./tests -coverprofile=coverage.out
@@ -36,17 +47,17 @@ build: $(BUILD_DIR)/$(BINARY)
 
 $(BUILD_DIR)/$(BINARY):
 	@echo Building $(BINARY)...
-	$(MKDIR_P) $(BUILD_DIR)
+	-$(MKDIR_P) $(BUILD_DIR)
 	$(GO_BUILD) $(BUILD_DIR)/$(BINARY) main.go
 	@echo ✓ Built $(BUILD_DIR)/$(BINARY)
 
 clean:
 	@echo Cleaning build artifacts...
-	$(RM) $(BUILD_DIR)
-	$(RM) $(OUT_DIR)
-	$(RM) $(RELEASE_DIR)
-	$(RM_FILE) coverage.out
-	$(RM_FILE) *.test
+	-$(RM) $(BUILD_DIR)
+	-$(RM) $(OUT_DIR)
+	-$(RM) $(RELEASE_DIR)
+	-$(RM_FILE) coverage.out
+	-$(RM_FILE) *.test
 	@echo ✓ Cleaned
 
 test:
@@ -92,7 +103,12 @@ run: build
 release: clean
 	@echo Building release binaries...
 	$(MKDIR_P) $(RELEASE_DIR)
-ifeq ($(OS),Windows_NT)
+ifneq ($(MSYSTEM),)
+	GOOS=windows GOARCH=amd64 $(GO_BUILD) $(RELEASE_DIR)/likhis-windows-amd64.exe main.go
+	GOOS=linux   GOARCH=amd64 $(GO_BUILD) $(RELEASE_DIR)/likhis-linux-amd64   main.go
+	GOOS=darwin  GOARCH=amd64 $(GO_BUILD) $(RELEASE_DIR)/likhis-darwin-amd64  main.go
+	GOOS=darwin  GOARCH=arm64 $(GO_BUILD) $(RELEASE_DIR)/likhis-darwin-arm64  main.go
+else ifeq ($(OS),Windows_NT)
 	set GOOS=windows&& set GOARCH=amd64&& $(GO_BUILD) $(RELEASE_DIR)/likhis-windows-amd64.exe main.go
 	set GOOS=linux&&   set GOARCH=amd64&& $(GO_BUILD) $(RELEASE_DIR)/likhis-linux-amd64   main.go
 	set GOOS=darwin&&  set GOARCH=amd64&& $(GO_BUILD) $(RELEASE_DIR)/likhis-darwin-amd64  main.go
@@ -106,7 +122,12 @@ endif
 	@echo ✓ Release binaries built in $(RELEASE_DIR)/
 
 link: build
-ifeq ($(OS),Windows_NT)
+ifneq ($(MSYSTEM),)
+	@echo Creating symbolic link at $(LINK_DIR)...
+	mkdir -p $(LINK_DIR)
+	ln -sf $(CURDIR)/$(BUILD_DIR)/$(BINARY) $(LINK_DIR)/$(BINARY)
+	@echo ✓ Symbolic link created: $(LINK_DIR)/$(BINARY)
+else ifeq ($(OS),Windows_NT)
 	@echo Creating symbolic link at $(LINK_DIR)...
 	if not exist $(LINK_DIR) mkdir $(LINK_DIR)
 	mklink "$(LINK_DIR)\$(BINARY)" "%CD%\$(BUILD_DIR)\$(BINARY)"
