@@ -12,6 +12,7 @@ import (
 	"github.com/marcuwynu23/likhis/internal/parser"
 	"github.com/marcuwynu23/likhis/internal/plugins"
 	"github.com/marcuwynu23/likhis/internal/traversal"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
@@ -46,7 +47,7 @@ func main() {
 
 	var (
 		projectPath = flag.String("path", ".", "Path to the project root directory")
-		output      = flag.String("output", "postman", "Output format: 'postman', 'insomnia', 'httpie', or 'curl'")
+		output      = flag.String("output", "postman", "Output format: 'postman', 'insomnia', 'httpie', 'curl', or 'openapi'")
 		outputFile  = flag.String("file", "", "Output file path (default: based on output format)")
 		outputPath  = flag.String("output-path", "", "Output directory path (default: current directory)")
 		framework   = flag.String("framework", "auto", frameworkHelp)
@@ -73,7 +74,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  %s --path ./api --output postman --output-path ./exports\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "  %s --path ./api --output postman --full\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "    (generates dev, staging, and production exports)\n")
-		fmt.Fprintf(os.Stderr, "\nSupported Output Formats: postman, insomnia, httpie, curl\n")
+		fmt.Fprintf(os.Stderr, "\nSupported Output Formats: postman, insomnia, httpie, curl, openapi\n")
 		if len(pluginMap) > 0 {
 			fmt.Fprintf(os.Stderr, "\nAvailable Framework Plugins:\n")
 			for name, plugin := range pluginMap {
@@ -197,9 +198,11 @@ func main() {
 				baseFileName = "insomnia-export"
 			case "httpie":
 				baseFileName = "httpie-collection"
-			case "curl":
-				baseFileName = "api-requests"
-			}
+		case "curl":
+			baseFileName = "api-requests"
+		case "openapi":
+			baseFileName = "openapi-spec"
+		}
 		}
 
 		// Generate output based on format
@@ -236,8 +239,16 @@ func main() {
 			} else {
 				defaultFileName = baseFileName + ".sh"
 			}
+		case "openapi":
+			openapiDoc := exporters.GenerateOpenAPIExport(allRoutes, absPath, env)
+			outputData, err = yaml.Marshal(openapiDoc)
+			if *full {
+				defaultFileName = fmt.Sprintf("%s-%s.yml", baseFileName, env)
+			} else {
+				defaultFileName = baseFileName + ".yml"
+			}
 		default:
-			fmt.Fprintf(os.Stderr, "Error: unsupported output format '%s'. Use 'postman', 'insomnia', 'httpie', or 'curl'\n", *output)
+			fmt.Fprintf(os.Stderr, "Error: unsupported output format '%s'. Use 'postman', 'insomnia', 'httpie', 'curl', or 'openapi'\n", *output)
 			os.Exit(1)
 		}
 
@@ -278,6 +289,8 @@ func main() {
 	outputName := strings.Title(*output)
 	if outputName == "Curl" {
 		outputName = "CURL"
+	} else if strings.ToLower(*output) == "openapi" {
+		outputName = "OpenAPI"
 	}
 	if *full {
 		fmt.Printf("Generated %d environment file(s) for %s\n", len(environments), outputName)
