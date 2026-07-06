@@ -5,232 +5,341 @@ Thank you for your interest in contributing to Likhis! This document provides gu
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
-- [How Can I Contribute?](#how-can-i-contribute)
-- [Development Setup](#development-setup)
+- [Prerequisites](#prerequisites)
+- [Project Structure](#project-structure)
+- [Makefile Reference](#makefile-reference)
 - [Development Workflow](#development-workflow)
 - [Coding Standards](#coding-standards)
 - [Testing](#testing)
-- [Submitting Changes](#submitting-changes)
-- [Creating Plugins](#creating-plugins)
+- [Commit Conventions](#commit-conventions)
+- [PR Process](#pr-process)
+- [Release Process](#release-process)
+- [Questions](#questions)
 
 ## Code of Conduct
 
-This project adheres to a code of conduct that all contributors are expected to follow. Please be respectful, inclusive, and professional in all interactions.
+This project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md) that all contributors are expected to follow. Please be respectful, inclusive, and professional in all interactions.
 
-## How Can I Contribute?
+## Prerequisites
 
-### Reporting Bugs
+| Tool | Version | Purpose |
+|---|---|---|
+| Go | 1.21+ | Compile and run the project |
+| Make | Any | Build automation and common tasks |
+| golangci-lint | Latest | Code linting (optional, for `make lint`) |
 
-If you find a bug, please open an issue with:
-- A clear, descriptive title
-- Steps to reproduce the issue
-- Expected vs. actual behavior
-- Your environment (OS, Go version, etc.)
-- Any relevant error messages or logs
+## Project Structure
 
-### Suggesting Enhancements
+```
+likhis/
+├── main.go                  # CLI entry point, flag parsing, orchestration
+├── internal/
+│   ├── traversal/           # BFS file traversal, dependency skipping
+│   ├── parser/              # Route parsing (Express, Flask, Django, Spring, Laravel + plugin engine)
+│   ├── exporters/           # Output generators (Postman, Insomnia, HTTPie, cURL, OpenAPI)
+│   └── plugins/             # YAML plugin loader and pattern matcher
+├── plugins/                 # Built-in YAML plugin definitions
+├── exp/                     # Example projects for integration testing
+├── build/                   # Compiled binaries (gitignored)
+├── docs/                    # Documentation site assets (Cloudflare Pages)
+├── tests/                   # Unit test files
+└── .github/workflows/       # CI/CD pipeline definitions
+```
 
-Feature requests are welcome! Please include:
-- A clear description of the feature
-- Use cases and examples
-- Potential implementation approach (if you have ideas)
+## Makefile Reference
 
-### Contributing Code
+| Command | Description |
+|---|---|
+| `make all` | Clean and build (default) |
+| `make build` | Build the binary into `build/` |
+| `make clean` | Remove build artifacts and coverage files |
+| `make test` | Run unit tests |
+| `make test-integration` | Build + test against example projects in `exp/` |
+| `make coverage` | Run tests with coverage report |
+| `make lint` | Run golangci-lint |
+| `make run` | Build and run on the current directory |
+| `make release` | Cross-compile for Windows, Linux, and macOS (amd64 + arm64) |
+| `make link` | Create symbolic link to PATH for local development |
+| `make help` | Show all available targets |
 
-- Fix bugs
-- Implement new features
-- Improve documentation
-- Add support for new frameworks via plugins
-- Optimize performance
-- Improve test coverage
+### Examples
 
-## Development Setup
+```bash
+# Quick build and test cycle
+make build && make test
 
-1. **Fork and clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/likhis.git
-   cd likhis
-   ```
+# Full integration test suite
+make test-integration
 
-2. **Ensure you have Go 1.21+ installed**:
-   ```bash
-   go version
-   ```
-
-3. **Build the project**:
-   ```bash
-   make build
-   ```
-
-4. **Run tests**:
-   ```bash
-   make test
-   ```
+# Build release binaries for all platforms
+make release
+```
 
 ## Development Workflow
 
-1. **Create a feature branch**:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
+1. **Fork the repository** and clone your fork:
 
-2. **Make your changes**:
-   - Write clean, readable code
-   - Follow the coding standards
+```bash
+git clone https://github.com/your-username/likhis.git
+cd likhis
+```
+
+2. **Create a feature branch:**
+
+```bash
+git checkout -b feat/your-feature-name
+```
+
+3. **Make your changes:**
+   - Write clean, readable code following the coding standards
    - Add tests for new functionality
    - Update documentation as needed
 
-3. **Test your changes**:
-   ```bash
-   # Run the test suite
-   make test
+4. **Test your changes:**
 
-   # Run integration tests
-   make test-integration
-   
-   # Test manually with example projects
-   ./build/likhis -p exp/express -o postman -F express
-   ```
+```bash
+make test                  # Unit tests
+make test-integration      # Integration tests against example projects
+make lint                  # Code linting
+```
 
-4. **Commit your changes**:
-   ```bash
-   git add .
-   git commit -m "feat: add support for new framework"
-   ```
-   
-   Use conventional commit messages:
-   - `feat:` for new features
-   - `fix:` for bug fixes
-   - `docs:` for documentation
-   - `refactor:` for code refactoring
-   - `test:` for tests
-   - `chore:` for maintenance
+5. **Commit your changes** using [conventional commits](#commit-conventions):
 
-5. **Push and create a Pull Request**:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+```bash
+git commit -m "feat(parser): add support for Fastify framework"
+```
+
+6. **Push and create a Pull Request:**
+
+```bash
+git push origin feat/your-feature-name
+```
 
 ## Coding Standards
 
-### Go Style Guide
+### Go Style
 
 - Follow [Effective Go](https://go.dev/doc/effective_go) guidelines
-- Use `gofmt` to format code
-- Keep functions focused and small
-- Add comments for exported functions and types
+- Use `gofmt` to format all Go code
+- Keep functions focused and small (prefer under 50 lines)
 - Use meaningful variable and function names
+- Document all exported functions and types
 
 ### Code Organization
 
-- Keep related code together
-- Separate concerns (parsing, exporting, traversal)
-- Use interfaces where appropriate
-- Avoid deep nesting
+- **Separation of concerns**: Each package has a single responsibility
+- **Dependency injection**: Pass dependencies explicitly, avoid global state
+- **Interface segregation**: Keep interfaces small and focused
+- **Error handling**: Always handle errors explicitly; use `fmt.Errorf` with `%w` for wrapping
 
-### Error Handling
+### File Naming
 
-- Always handle errors explicitly
-- Return errors from functions that can fail
-- Provide meaningful error messages
-- Use `fmt.Errorf` with `%w` for error wrapping when appropriate
+- Packages: lowercase, single word when possible
+- Files: lowercase with underscores for multiple words
+- Exported functions: PascalCase
+- Unexported functions: camelCase
+- Constants: PascalCase or UPPER_SNAKE_CASE
 
 ## Testing
 
 ### Running Tests
 
 ```bash
-# Run all tests
-make test
-
-# Run integration tests
-make test-integration
-
-# Test specific framework
-./build/likhis -p exp/express -o postman -F express
+make test                # Run all unit tests
+make test-integration    # Run integration tests against examples in exp/
+make coverage            # Run tests with coverage report
 ```
 
 ### Writing Tests
 
 - Test edge cases and error conditions
-- Test with the example projects in `exp/`
-- Verify output formats are correct
-- Test across different frameworks
+- Test with example projects in `exp/`
+- Verify output formats are correct and valid JSON/YAML
+- Aim for >80% coverage on core packages (parser, exporters)
 
-### Test Coverage
+### Test Patterns
 
-Aim for good test coverage, especially for:
-- Route parsing logic
-- Export format generation
-- Plugin system
-- Edge cases and error handling
+**Unit test example:**
 
-## Submitting Changes
+```go
+func TestParseExpressRoute(t *testing.T) {
+    parser := NewRouteParser("express")
+    routes, err := parser.ParseFile("testdata/express/routes.js")
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+    if len(routes) == 0 {
+        t.Error("expected at least one route")
+    }
+}
+```
 
-### Pull Request Process
+### Integration Test Example
 
-1. **Update your branch**:
-   ```bash
-   git checkout main
-   git pull upstream main
-   git checkout your-branch
-   git rebase main
-   ```
+```bash
+./build/likhis -p exp/express -o postman -F express -O out/express
+# Verify: out/express/postman-collection.json exists and is valid JSON
+```
 
-2. **Ensure all tests pass**:
-   ```bash
-   make test
-   ```
+## Commit Conventions
 
-3. **Create a descriptive PR**:
-   - Clear title and description
-   - Reference related issues
-   - Include screenshots/examples if applicable
-   - List any breaking changes
+Likhis uses [Conventional Commits](https://www.conventionalcommits.org/) for all commit messages. This allows automatic changelog generation and semantic versioning.
 
-4. **Respond to feedback**:
-   - Address review comments
-   - Make requested changes
-   - Keep discussions constructive
+### Format
 
-### PR Checklist
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+| Type | Usage |
+|---|---|
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `docs` | Documentation changes |
+| `refactor` | Code refactoring (no functional change) |
+| `test` | Adding or updating tests |
+| `chore` | Maintenance, build, CI, dependencies |
+| `perf` | Performance improvements |
+| `style` | Code style changes (formatting, etc.) |
+| `ci` | CI/CD configuration changes |
+
+### Scope
+
+The scope should be the package or area affected:
+
+- `parser` — route parsing logic
+- `exporters` — output format generators
+- `plugins` — plugin system
+- `traversal` — file traversal
+- `cli` — command-line interface
+- `docs` — documentation
+
+### Examples
+
+```
+feat(parser): add support for Fastify framework
+fix(exporters): handle empty route list in Postman export
+docs(readme): add CI/CD integration section
+refactor(plugins): extract pattern compilation to separate function
+test(parser): add edge cases for Spring Boot path parameters
+chore(build): update Go version to 1.22
+```
+
+### Breaking Changes
+
+Add `BREAKING CHANGE:` in the footer or append `!` after the type/scope:
+
+```
+feat!(api): change output format from v1 to v2
+
+BREAKING CHANGE: Output file structure has changed.
+```
+
+## PR Process
+
+### Before Submitting
 
 - [ ] Code follows project style guidelines
-- [ ] Tests pass locally
-- [ ] Documentation updated (if needed)
-- [ ] Commit messages follow conventions
-- [ ] No merge conflicts
-- [ ] Changes tested with example projects
+- [ ] Tests pass locally (`make test`)
+- [ ] Integration tests pass (`make test-integration`)
+- [ ] Lint passes (`make lint`)
+- [ ] Documentation updated (README, user guide, or plugin docs)
+- [ ] Commit messages follow conventional commits
+- [ ] No merge conflicts with main branch
+- [ ] Changes tested with example projects in `exp/`
 
-## Creating Plugins
+### Pull Request Checklist
 
-### Plugin Structure
+Copy and paste this into your PR description:
 
-See [GUIDELINES.md](GUIDELINES.md) for detailed plugin creation guidelines.
+```markdown
+## Description
 
-### Plugin Testing
+[Describe your changes and which issue they fix]
 
-1. Create your plugin YAML file in `plugins/`
-2. Test with a sample project:
-   ```bash
-   ./build/likhis -p /path/to/project -o postman -F your-framework
-   ```
-3. Verify routes are detected correctly
-4. Test with different output formats
+Fixes #(issue)
 
-### Submitting Plugins
+## Type of Change
 
-When submitting a new framework plugin:
-- Include the plugin YAML file
-- Add example project in `exp/` (if possible)
-- Update documentation
-- Test with multiple route patterns
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation
+- [ ] Refactoring
+- [ ] Tests
+
+## Checklist
+
+- [ ] Code follows project style
+- [ ] Tests pass
+- [ ] Integration tests pass
+- [ ] Lint passes
+- [ ] Documentation updated
+- [ ] Conventional commits used
+```
+
+### Review Process
+
+1. A maintainer will review your PR within a few days
+2. Address feedback by pushing additional commits
+3. Once approved, a maintainer will merge your PR
+
+### What Gets Merged
+
+- Features that follow the project's architecture and design principles
+- Bug fixes with clear reproduction steps
+- Documentation improvements
+- Plugin additions with example projects
+
+### What Doesn't Get Merged
+
+- Changes that break existing functionality without clear migration path
+- Unrelated or cosmetic changes mixed with functional changes
+- Code that doesn't include tests
+
+## Release Process
+
+1. **Update CHANGELOG.md** — ensure all changes since last release are documented
+
+2. **Run full test suite:**
+
+```bash
+make test && make test-integration
+```
+
+3. **Build release binaries:**
+
+```bash
+make release
+```
+
+4. **Create a git tag:**
+
+```bash
+git tag -a v1.2.0 -m "Release version 1.2.0"
+git push origin v1.2.0
+```
+
+5. **Create a GitHub Release:**
+   - Upload the binaries from `release/`
+   - Add release notes summarizing changes
+   - Highlight new features and breaking changes
+
+Version numbers follow [Semantic Versioning](https://semver.org/):
+- **MAJOR**: Breaking changes
+- **MINOR**: New features (backward compatible)
+- **PATCH**: Bug fixes
 
 ## Questions?
 
-- Open an issue for questions or discussions
-- Check existing issues and PRs first
-- Be patient and respectful
+- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/marcuwynu23/likhis/issues)
+- **Discussions**: Ask questions and share ideas in [GitHub Discussions](https://github.com/marcuwynu23/likhis/discussions)
+- **Existing issues**: Check open/closed issues before creating new ones
 
-Thank you for contributing to Likhis! 🎉
-
+Thank you for contributing to Likhis!
