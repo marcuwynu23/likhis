@@ -59,20 +59,12 @@ Feature requests are welcome! Please include:
 
 3. **Build the project**:
    ```bash
-   # Windows
-   scripts\build.bat
-   
-   # Unix/Linux/macOS
-   ./scripts/build.sh
+   make build
    ```
 
 4. **Run tests**:
    ```bash
-   # Windows
-   scripts\test.bat
-   
-   # Unix/Linux/macOS
-   ./scripts/test.sh
+   make test
    ```
 
 ## Development Workflow
@@ -91,7 +83,10 @@ Feature requests are welcome! Please include:
 3. **Test your changes**:
    ```bash
    # Run the test suite
-   scripts\test.bat  # or ./scripts/test.sh
+   make test
+
+   # Run integration tests
+   make test-integration
    
    # Test manually with example projects
    ./build/likhis -p exp/express -o postman -F express
@@ -146,8 +141,10 @@ Feature requests are welcome! Please include:
 
 ```bash
 # Run all tests
-scripts\test.bat  # Windows
-./scripts/test.sh  # Unix/Linux/macOS
+make test
+
+# Run integration tests
+make test-integration
 
 # Test specific framework
 ./build/likhis -p exp/express -o postman -F express
@@ -182,7 +179,7 @@ Aim for good test coverage, especially for:
 
 2. **Ensure all tests pass**:
    ```bash
-   scripts\test.bat  # or ./scripts/test.sh
+   make test
    ```
 
 3. **Create a descriptive PR**:
