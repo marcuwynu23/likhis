@@ -1,21 +1,23 @@
 <div align="center">
-  <h1>Likhis - Universal API Route Mapper</h1>
+  <h1>Likhis</h1>
   <p><strong>Cross-Platform API Route Discovery and Export Tool</strong></p>
   <p>
     <img src="https://img.shields.io/github/v/release/marcuwynu23/likhis?include_prereleases&style=flat-square" alt="Release"/>
     <img src="https://img.shields.io/github/go-mod/go-version/marcuwynu23/likhis?style=flat-square" alt="Go Version"/>
     <img src="https://img.shields.io/github/stars/marcuwynu23/likhis?style=flat-square" alt="GitHub Stars"/>
     <img src="https://img.shields.io/github/forks/marcuwynu23/likhis?style=flat-square" alt="GitHub Forks"/>
-    <img src="https://img.shields.io/github/license/marcuwynu23/likhis?style=flat-square" alt="License"/>
+    <img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"/>
     <img src="https://img.shields.io/github/issues/marcuwynu23/likhis?style=flat-square" alt="GitHub Issues"/>
   </p>
 </div>
 
-
-
 > **Automated API route discovery and export tool for modern backend frameworks**
 
 Likhis is a high-performance, cross-platform command-line tool written in Go that automatically analyzes backend source code to discover API routes, extract HTTP methods and parameters, and generate ready-to-import collections for popular API testing tools. It eliminates manual route documentation by intelligently parsing your codebase and producing standardized exports compatible with industry-standard testing platforms.
+
+### Pronunciation & Origin
+- **Pronunciation:** `/lik-hees/` (**Lik** as in *lick* + **his** with a long *ee* sound like *heez*)
+- **Etymology:** Named after the Tagalog word **Likha** (to create/build) combined with a phonetic twist on **Lihis** (to deviate/pivot).
 
 ## Table of Contents
 
@@ -62,13 +64,13 @@ Likhis streamlines the API documentation and testing workflow by automatically e
 
 ### Supported Frameworks
 
-| Framework | Language | Detection Method |
-|-----------|----------|-----------------|
-| Express.js | JavaScript/TypeScript | `app.get()`, `router.post()`, etc. |
-| Flask | Python | `@app.route()` decorators |
-| Django | Python | `urls.py` with `path()` or `re_path()` |
-| Spring Boot | Java | `@GetMapping()`, `@PostMapping()`, etc. |
-| Laravel | PHP | `Route::get()`, `Route::post()`, etc. |
+| Framework   | Language              | Detection Method                        |
+| ----------- | --------------------- | --------------------------------------- |
+| Express.js  | JavaScript/TypeScript | `app.get()`, `router.post()`, etc.      |
+| Flask       | Python                | `@app.route()` decorators               |
+| Django      | Python                | `urls.py` with `path()` or `re_path()`  |
+| Spring Boot | Java                  | `@GetMapping()`, `@PostMapping()`, etc. |
+| Laravel     | PHP                   | `Route::get()`, `Route::post()`, etc.   |
 
 ## Prerequisites
 
@@ -81,40 +83,43 @@ Likhis streamlines the API documentation and testing workflow by automatically e
 ### Building from Source
 
 1. **Clone the repository**:
+
    ```bash
    git clone <repository-url>
    cd likhis
    ```
 
 2. **Build the executable**:
-   
-   **Windows (Batch)**:
-   ```cmd
-   scripts\build.bat
+
+   **Using Make (cross-platform)**:
+
+   ```bash
+   make build
    ```
-   
-   **Windows (PowerShell)**:
-   ```powershell
-   scripts\build.ps1
-   ```
-   
+
    **Manual Build**:
+
    ```bash
    go build -o build/likhis.exe main.go
    ```
 
-3. **Optional: Create symbolic link** (Windows):
-   ```cmd
-   scripts\link.bat
-   ```
-   or
-   ```powershell
-   scripts\link.ps1
-   ```
-   
-   This creates a link at `C:\Bin\webserve\likhis.exe` for easy access.
-
 The compiled executable will be located in the `build/` directory.
+
+### Available Makefile Targets
+
+| Command                 | Description                           |
+| ----------------------- | ------------------------------------- |
+| `make all`              | Clean and build (default)             |
+| `make build`            | Build the binary                      |
+| `make clean`            | Remove build artifacts                |
+| `make test`             | Run unit tests                        |
+| `make test-integration` | Build + test against example projects |
+| `make coverage`         | Run tests with coverage report        |
+| `make lint`             | Run golangci-lint                     |
+| `make run`              | Build + run on current directory      |
+| `make release`          | Cross-compile for all platforms       |
+| `make link`             | Create symbolic link to PATH          |
+| `make help`             | Show available targets                |
 
 ## Quick Start
 
@@ -142,14 +147,14 @@ likhis [OPTIONS]
 
 ### Options
 
-| Flag | Short | Description | Default |
-|------|-------|-------------|---------|
-| `--path` | `-p` | Path to project root directory | Current directory |
-| `--output` | `-o` | Output format: `postman`, `insomnia`, `httpie`, `curl` | `postman` |
-| `--file` | `-f` | Custom output file name | Auto-generated based on format |
-| `--output-path` | `-O` | Output directory path | Current directory |
-| `--framework` | `-F` | Target framework: `auto` or plugin name | `auto` |
-| `--full` | | Generate exports for dev, staging, and prod | `false` |
+| Flag            | Short | Description                                            | Default                        |
+| --------------- | ----- | ------------------------------------------------------ | ------------------------------ |
+| `--path`        | `-p`  | Path to project root directory                         | Current directory              |
+| `--output`      | `-o`  | Output format: `postman`, `insomnia`, `httpie`, `curl` | `postman`                      |
+| `--file`        | `-f`  | Custom output file name                                | Auto-generated based on format |
+| `--output-path` | `-O`  | Output directory path                                  | Current directory              |
+| `--framework`   | `-F`  | Target framework: `auto` or plugin name                | `auto`                         |
+| `--full`        |       | Generate exports for dev, staging, and prod            | `false`                        |
 
 ### Examples
 
@@ -203,16 +208,19 @@ likhis -p ./my-api -o postman --full --output-path ./api-exports
 #### Framework-Specific Examples
 
 **Express.js with Router Mounting**:
+
 ```bash
 likhis -p ./express-app/src -o postman -F express
 ```
 
 **Django URL Patterns**:
+
 ```bash
 likhis -p ./django-project -o insomnia -F django
 ```
 
 **Spring Boot Controllers**:
+
 ```bash
 likhis -p ./spring-app/src/main/java -o postman -F spring
 ```
@@ -222,23 +230,27 @@ likhis -p ./spring-app/src/main/java -o postman -F spring
 ### Node.js/Express
 
 Detects routes defined using:
+
 - `app.get()`, `app.post()`, `app.put()`, `app.delete()`, `app.patch()`
 - `router.get()`, `router.post()`, etc.
 - Router mounting: `app.use('/api', router)`
 
 **Example**:
+
 ```javascript
-app.get('/users/:id', handler);
-router.post('/products', handler);
+app.get("/users/:id", handler);
+router.post("/products", handler);
 ```
 
 ### Python/Flask
 
 Detects routes defined using:
+
 - `@app.route()` decorators
 - HTTP methods specified in `methods` parameter
 
 **Example**:
+
 ```python
 @app.route('/users/<id>', methods=['GET'])
 def get_user(id):
@@ -248,10 +260,12 @@ def get_user(id):
 ### Django
 
 Detects routes from `urls.py` files:
+
 - `path()` function
 - `re_path()` function
 
 **Example**:
+
 ```python
 path('users/<int:id>/', views.user_detail)
 ```
@@ -259,12 +273,14 @@ path('users/<int:id>/', views.user_detail)
 ### Java/Spring Boot
 
 Detects routes from controller classes:
+
 - `@GetMapping()`, `@PostMapping()`, `@PutMapping()`, `@DeleteMapping()`, `@PatchMapping()`
 - `@RequestMapping()` at class and method level
 - `@RequestParam` for query parameters
 - `@PathVariable` for path parameters
 
 **Example**:
+
 ```java
 @RestController
 @RequestMapping("/users")
@@ -279,9 +295,11 @@ public class UserController {
 ### PHP/Laravel
 
 Detects routes from route files:
+
 - `Route::get()`, `Route::post()`, `Route::put()`, `Route::delete()`, `Route::patch()`
 
 **Example**:
+
 ```php
 Route::get('/users/{id}', [UserController::class, 'show']);
 ```
@@ -293,12 +311,14 @@ Route::get('/users/{id}', [UserController::class, 'show']);
 Generates a complete Postman Collection v2.1 JSON file ready for import.
 
 **Features**:
+
 - Environment variables for base URLs
 - Organized request structure
 - Path and query parameters
 - Request body templates
 
 **Usage**:
+
 ```bash
 likhis -p ./my-api -o postman
 # Output: postman-collection.json
@@ -309,12 +329,14 @@ likhis -p ./my-api -o postman
 Generates a native Insomnia export compatible with Insomnia Desktop.
 
 **Features**:
+
 - Workspace structure
 - Request groups
 - Environment variables
 - Cookie jar support
 
 **Usage**:
+
 ```bash
 likhis -p ./my-api -o insomnia
 # Output: insomnia-export.json
@@ -325,6 +347,7 @@ likhis -p ./my-api -o insomnia
 Generates a collection file compatible with HTTPie Desktop.
 
 **Usage**:
+
 ```bash
 likhis -p ./my-api -o httpie
 # Output: httpie-collection.json
@@ -337,6 +360,7 @@ likhis -p ./my-api -o httpie
 Generates a shell script containing ready-to-use `curl` commands for each route.
 
 **Usage**:
+
 ```bash
 likhis -p ./my-api -o curl
 # Output: curl-commands.sh
@@ -369,11 +393,13 @@ router_mount:
 ### Creating a Custom Plugin
 
 1. **Create a YAML file** in the `plugins/` directory:
+
    ```bash
    plugins/myframework.yml
    ```
 
 2. **Define the plugin structure**:
+
    ```yaml
    name: myframework
    description: My Custom Framework
@@ -403,6 +429,7 @@ The following plugins are included by default:
 ### Plugin Location
 
 Plugins are loaded from:
+
 1. `{executable_directory}/plugins/` (primary location)
 2. `./plugins/` (fallback if executable directory doesn't exist)
 
@@ -473,9 +500,13 @@ For detailed information on how to contribute, please see our [Contributing Guid
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes following our [Development Guidelines](GUIDELINES.md)
-4. Test with the example applications in `exp/`:
+4. Build and test:
    ```bash
-   scripts\test.bat
+   make build          # Build the binary
+   make test           # Run unit tests
+   make test-integration  # Run integration tests against example projects
+   make lint           # Run golangci-lint
+   make coverage       # Run tests with coverage report
    ```
 5. Submit a pull request
 
@@ -504,7 +535,11 @@ If you find Likhis useful and would like to support its development, please cons
 
 ## License
 
-This project is open source and available for use. See the repository for license details.
+This project is licensed under the Apache License 2.0 — see the [LICENSE](LICENSE) file for details.
+
+---
+
+Happy Coding! 🚀
 
 ---
 
